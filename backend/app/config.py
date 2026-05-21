@@ -5,7 +5,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     anthropic_api_key: str
-    openai_api_key: str
     database_url: str = "sqlite+aiosqlite:///./anima.db"
     chroma_path: str = "./chroma_db"
 
@@ -14,8 +13,7 @@ class Settings(BaseSettings):
     question_dedup_threshold: float = 0.90
 
     claude_model: str = "claude-sonnet-4-6"
-    embedding_model: str = "text-embedding-3-small"
-    embedding_dimensions: int = 1536
+    # embeddings rodando localmente via sentence-transformers (all-MiniLM-L6-v2, dimensão 384)
 
 
 settings = Settings()

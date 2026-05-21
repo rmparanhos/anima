@@ -62,8 +62,7 @@ npm run dev
 
 ```bash
 # backend/.env
-ANTHROPIC_API_KEY=sk-ant-...        # Claude (respostas)
-OPENAI_API_KEY=sk-...               # embeddings (text-embedding-3-small)
+ANTHROPIC_API_KEY=sk-ant-...        # única API key necessária (Claude)
 DATABASE_URL=sqlite+aiosqlite:///./anima.db
 CHROMA_PATH=./chroma_db
 
@@ -72,6 +71,8 @@ RAG_CONFIDENCE_THRESHOLD=0.72       # abaixo disso → "não sei"
 RAG_TOP_K=5                         # chunks recuperados por busca
 QUESTION_DEDUP_THRESHOLD=0.90       # similaridade para agrupar duplicatas
 ```
+
+> Embeddings rodam **localmente** via `sentence-transformers` (modelo `all-MiniLM-L6-v2`, ~90MB, baixado automaticamente na primeira execução). Sem OpenAI, sem custo adicional.
 
 ```bash
 # frontend/.env.local
@@ -150,7 +151,7 @@ anima/
 | Backend | Python 3.11 + FastAPI |
 | Banco | SQLite (relacional) + ChromaDB (vetores) |
 | LLM | Claude via API Anthropic |
-| Embeddings | OpenAI `text-embedding-3-small` |
+| Embeddings | `sentence-transformers` local (sem API key) |
 | Frontend | Next.js 14 + TypeScript + Tailwind |
 
 Sem Docker, sem serviços externos. Tudo roda com `pip install` + `npm install`.
