@@ -116,11 +116,11 @@ export function pullModel(model) {
 export function installPythonDeps(py) {
   info("Checking Python dependencies...")
   try {
-    execSync(`${py} -c "import fastapi"`, { stdio: "pipe" })
+    execSync(`${py} -c "import fastapi, alembic, chromadb, sentence_transformers"`, { stdio: "pipe" })
     ok("Python dependencies OK")
   } catch {
     warn("Installing Python dependencies...")
-    run(`${py} -m pip install -e "${API}[dev]" -q`)
+    run(`${py} -m pip install -e "${API}" -q`)
     ok("Python dependencies installed")
   }
 }
