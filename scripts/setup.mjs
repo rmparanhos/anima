@@ -163,8 +163,8 @@ export function installNodeDeps() {
   ok("Dependências Node.js instaladas")
 }
 
-// ─── main (quando chamado direto) ─────────────────────────────────────────────
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// ─── export default (usado pelo anima CLI) ────────────────────────────────────
+export default async function setup() {
   console.log(c(94, "\n╔══════════════════╗\n║   anima setup    ║\n╚══════════════════╝\n"))
 
   checkNode()
@@ -179,5 +179,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   installNodeDeps()
 
   console.log()
-  ok("Setup completo! Rode 'npm start' para iniciar.")
+  ok("Setup completo! Rode 'anima start' para iniciar.")
+}
+
+// ─── chamado direto (npm run setup) ──────────────────────────────────────────
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  await setup()
 }

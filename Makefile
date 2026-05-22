@@ -1,19 +1,16 @@
-.PHONY: start setup stop api web model
+.PHONY: start setup stop api web
 
 start:
-	python start.py start
+	npm start
 
 setup:
-	python start.py setup
+	npm run setup
 
 stop:
-	python start.py stop
+	npm run stop
 
 api:
-	python start.py api
+	npm run api
 
 web:
-	python start.py web
-
-model:
-	python start.py model $(name)
+	npm run web

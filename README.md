@@ -31,11 +31,18 @@ Like Stack Overflow, but with AI as the main mediator. Anyone can ask and anyone
 ```bash
 git clone https://github.com/rmparanhos/anima
 cd anima
-npm install
-npm start
+
+# install the anima command (one time)
+npm install -g .
+
+# start everything
+anima start
 ```
 
-`npm start` handles everything automatically:
+> Already have it installed? Just `anima start`.
+> Prefer not to install globally? Use `npx . start` from the project directory.
+
+`anima start` handles everything automatically:
 1. Checks Python and Node.js
 2. Installs Ollama if not present (Mac, Linux, Windows)
 3. Detects your RAM and downloads the right model automatically
@@ -63,14 +70,14 @@ Press Ctrl+C to stop everything.
 ### Available commands
 
 ```bash
-npm start          # validates everything and starts the project
-npm run setup      # validates and configures without starting
-npm run stop       # stops api and web
-npm run api        # api only
-npm run web        # web only
+anima start              # validates everything and starts the project
+anima setup              # validates and configures without starting
+anima stop               # stops api and web
+anima api                # api only
+anima web                # web only
+anima model              # lists available Ollama models
+anima model qwen2.5:7b   # switches the model
 ```
-
-> **Developer CLI:** after `pipx install ./api`, the `anima` command is also available with extra options like `anima model qwen2.5:7b`.
 
 ---
 

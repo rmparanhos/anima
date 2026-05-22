@@ -3,13 +3,16 @@
   "version": "0.1.0",
   "description": "A collective knowledge base powered by AI",
   "private": true,
+  "type": "module",
+  "bin": {
+    "anima": "./scripts/anima.mjs"
+  },
   "scripts": {
     "start": "node scripts/start.mjs",
     "setup": "node scripts/setup.mjs",
-    "stop": "node scripts/stop.mjs",
-    "api": "cd api && python -m uvicorn app.main:app --reload",
-    "web": "cd web && npm run dev",
-    "install:all": "npm install --prefix web"
+    "stop":  "node scripts/stop.mjs",
+    "api":   "cd api && python -m uvicorn app.main:app --reload",
+    "web":   "cd web && npm run dev"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
