@@ -31,33 +31,27 @@ Like Stack Overflow, but with AI as the main mediator. Anyone can ask and anyone
 ```bash
 git clone https://github.com/rmparanhos/anima
 cd anima
-
-# install the anima command (one time)
-pipx install ./api
-
-# start everything
-anima start
+npm install
+npm start
 ```
 
-> Don't have pipx? Install it with `brew install pipx` (macOS) or `pip install pipx`.
-
-`anima start` handles everything automatically:
+`npm start` handles everything automatically:
 1. Checks Python and Node.js
 2. Installs Ollama if not present (Mac, Linux, Windows)
 3. Detects your RAM and downloads the right model automatically
-4. Installs Node.js dependencies
+4. Installs Python and web dependencies
 5. Creates `.env` files from the examples
 6. Runs database migrations
 7. Starts api + web
 
 ```
-✓ Python 3.9.x
 ✓ Node.js v20.x
+✓ Python 3.9.x
 ✓ Ollama installed
   RAM detected: 16GB → model: qwen2.5:7b
 ✓ Model qwen2.5:7b available
 ✓ Database OK
-✓ Node.js dependencies OK
+✓ Web dependencies OK
 
 API     → http://localhost:8000
 Swagger → http://localhost:8000/docs
@@ -69,16 +63,14 @@ Press Ctrl+C to stop everything.
 ### Available commands
 
 ```bash
-anima start                  # validates everything and starts the project
-anima setup                  # validates and configures without starting
-anima stop                   # stops api and web
-anima api                    # api only
-anima web                    # web only
-anima model                  # lists available Ollama models
-anima model qwen2.5:7b       # switches the model
+npm start          # validates everything and starts the project
+npm run setup      # validates and configures without starting
+npm run stop       # stops api and web
+npm run api        # api only
+npm run web        # web only
 ```
 
-> **No pipx?** Fallback: `python start.py` works without any prior installation.
+> **Developer CLI:** after `pipx install ./api`, the `anima` command is also available with extra options like `anima model qwen2.5:7b`.
 
 ---
 
