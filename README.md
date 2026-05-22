@@ -1,32 +1,32 @@
 # anima
 
-Base de conhecimento coletiva com IA. A IA responde o que sabe — o que não sabe, ela pergunta para a comunidade e aprende com a resposta.
+A collective knowledge base powered by AI. The AI answers what it knows — what it doesn't know, it asks the community and learns from the response.
 
 ---
 
-## Como funciona
+## How it works
 
 ```
-Usuário pergunta
+User asks a question
       │
-      ├─ IA sabe → responde direto
+      ├─ AI knows → answers directly
       │
-      └─ IA não sabe → registra como pendente
+      └─ AI doesn't know → creates a pending question
                               │
-                        Alguém responde
+                        Someone answers
                               │
-                        Resposta entra na base
+                        Answer is added to the knowledge base
                               │
-                        Próxima vez: IA já sabe
+                        Next time: AI already knows
 ```
 
-É como um Stack Overflow, mas o mediador principal é a IA. Qualquer pessoa pode perguntar e qualquer pessoa pode responder.
+Like Stack Overflow, but with AI as the main mediator. Anyone can ask and anyone can answer.
 
 ---
 
-## Rodando localmente
+## Running locally
 
-**Pré-requisitos:** Python 3.11+ e Node 18+. O resto é instalado automaticamente.
+**Requirements:** Python 3.11+ and Node 18+. Everything else is installed automatically.
 
 ```bash
 git clone https://github.com/rmparanhos/anima
@@ -34,75 +34,75 @@ cd anima
 bash start.sh
 ```
 
-O script cuida de tudo:
-1. Verifica Python e Node.js
-2. Instala o Ollama se não estiver instalado
-3. Detecta sua RAM e baixa o modelo certo automaticamente
-4. Instala dependências Python e Node.js
-5. Cria os arquivos `.env` a partir dos exemplos
-6. Roda as migrações do banco
-7. Sobe backend + frontend
+The script handles everything:
+1. Checks Python and Node.js
+2. Installs Ollama if not present
+3. Detects your RAM and downloads the right model automatically
+4. Installs Python and Node.js dependencies
+5. Creates `.env` files from the examples
+6. Runs database migrations
+7. Starts backend + frontend
 
 ```
 ✓ Python 3.11.x
 ✓ Node.js v20.x
-✓ Ollama instalado
-  RAM detectada: 16GB → modelo recomendado: llama3.1:8b
-✓ Modelo llama3.1:8b disponível
-✓ Dependências Python OK
-✓ Banco OK
-✓ Dependências Node.js OK
+✓ Ollama installed
+  RAM detected: 16GB → recommended model: llama3.1:8b
+✓ Model llama3.1:8b available
+✓ Python dependencies OK
+✓ Database OK
+✓ Node.js dependencies OK
 
 Backend  → http://localhost:8000
 Swagger  → http://localhost:8000/docs
 Frontend → http://localhost:3000
 
-Pressione Ctrl+C para parar tudo.
+Press Ctrl+C to stop everything.
 ```
 
-### Outros comandos
+### Other commands
 
 ```bash
-make start      # igual ao bash start.sh
-make backend    # só o backend
-make frontend   # só o frontend
-make stop       # para tudo
+make start      # same as bash start.sh
+make backend    # backend only
+make frontend   # frontend only
+make stop       # stop everything
 ```
 
 ---
 
-## Variáveis de ambiente
+## Environment variables
 
-Geradas automaticamente pelo `start.sh`. Para ajuste manual:
+Generated automatically by `start.sh`. For manual adjustment:
 
 ```bash
 # backend/.env
 DATABASE_URL=sqlite+aiosqlite:///./anima.db
 CHROMA_PATH=./chroma_db
 OLLAMA_BASE_URL=http://localhost:11434/v1
-OLLAMA_MODEL=llama3.1:8b   # ou phi3:mini para 8GB de RAM
+OLLAMA_MODEL=llama3.1:8b   # or phi3:mini for 8GB RAM
 
 # frontend/.env.local
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-> Embeddings e LLM rodam **100% local**. Nenhuma API key necessária.
+> Embeddings and LLM run **100% locally**. No API keys required.
 
 ---
 
-## Páginas
+## Pages
 
-| Rota | O que é |
-|------|---------|
-| `/chat` | Chat com a IA |
-| `/pending` | Perguntas que a IA não soube responder |
-| `/docs` | Wiki gerada automaticamente pela base |
+| Route | Description |
+|-------|-------------|
+| `/chat` | Chat with the AI |
+| `/pending` | Questions the AI couldn't answer |
+| `/docs` | Wiki auto-generated from the knowledge base |
 
 ---
 
-## Integração com Claude Code / GitHub Copilot (MCP)
+## Integration with Claude Code / GitHub Copilot (MCP)
 
-Adicione ao seu `~/.claude/claude_desktop_config.json` ou `.mcp.json`:
+Add to your `~/.claude/claude_desktop_config.json` or `.mcp.json`:
 
 ```json
 {
@@ -110,7 +110,7 @@ Adicione ao seu `~/.claude/claude_desktop_config.json` ou `.mcp.json`:
     "anima": {
       "command": "python",
       "args": ["-m", "app.mcp_server"],
-      "cwd": "/caminho/para/anima/backend",
+      "cwd": "/path/to/anima/backend",
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434/v1",
         "OLLAMA_MODEL": "llama3.1:8b"
@@ -120,18 +120,18 @@ Adicione ao seu `~/.claude/claude_desktop_config.json` ou `.mcp.json`:
 }
 ```
 
-Ferramentas disponíveis:
-- `search_knowledge(query)` — busca semântica na base
-- `ask_question(question)` — fluxo completo: responde ou registra pendente
+Available tools:
+- `search_knowledge(query)` — semantic search over the knowledge base
+- `ask_question(question)` — full flow: answers or creates a pending question
 
 ---
 
-## Estrutura do projeto
+## Project structure
 
 ```
 anima/
-├── start.sh                     # ponto de entrada — valida e sobe tudo
-├── Makefile                     # atalhos: make start, make stop…
+├── start.sh                     # entry point — validates and starts everything
+├── Makefile                     # shortcuts: make start, make stop…
 ├── backend/
 │   ├── app/
 │   │   ├── api/v1/              # endpoints (chat, questions, knowledge, users)
@@ -140,29 +140,29 @@ anima/
 │   │   │   └── knowledge/       # search (ChromaDB), ingestion
 │   │   ├── models/              # SQLAlchemy: User, Conversation, Message, Question, KnowledgeChunk
 │   │   ├── services/            # chat_service, question_service, knowledge_service
-│   │   └── mcp_server.py        # MCP Server para editores
-│   └── alembic/                 # migrações do banco
+│   │   └── mcp_server.py        # MCP Server for editors
+│   └── alembic/                 # database migrations
 └── frontend/
     └── src/
         ├── app/
-        │   ├── chat/            # interface de chat
-        │   ├── pending/         # perguntas pendentes
-        │   └── docs/            # wiki da base
+        │   ├── chat/            # chat interface
+        │   ├── pending/         # pending questions
+        │   └── docs/            # knowledge base wiki
         └── lib/
-            ├── api.ts           # cliente HTTP
-            └── store.ts         # estado do usuário (Zustand)
+            ├── api.ts           # HTTP client
+            └── store.ts         # user state (Zustand)
 ```
 
 ---
 
 ## Stack
 
-| Camada | Tecnologia |
-|--------|------------|
+| Layer | Technology |
+|-------|------------|
 | Backend | Python 3.11 + FastAPI |
-| Banco | SQLite (relacional) + ChromaDB (vetores) |
+| Database | SQLite (relational) + ChromaDB (vectors) |
 | LLM | Ollama local (llama3.1, phi3, mistral…) |
-| Embeddings | `sentence-transformers` local (sem API key) |
+| Embeddings | `sentence-transformers` local (no API key) |
 | Frontend | Next.js 14 + TypeScript + Tailwind |
 
-Zero API keys. Zero Docker. Zero serviços externos.
+Zero API keys. Zero Docker. Zero external services.
