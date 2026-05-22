@@ -12,8 +12,8 @@ diretamente no terminal sem precisar do python start.py.
 import sys
 from pathlib import Path
 
-if sys.version_info < (3, 11):
-    print(f"✗ Python 3.11+ necessário (encontrado: {sys.version.split()[0]})")
+if sys.version_info < (3, 9):
+    print(f"✗ Python 3.9+ necessário (encontrado: {sys.version.split()[0]})")
     sys.exit(1)
 
 # Adiciona a api ao path para encontrar app.cli antes do pipx install

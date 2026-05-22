@@ -26,7 +26,7 @@ Like Stack Overflow, but with AI as the main mediator. Anyone can ask and anyone
 
 ## Running locally
 
-**Requirements:** Python 3.11+ and Node 18+.
+**Requirements:** Python 3.9+ and Node 18+.
 
 ```bash
 git clone https://github.com/rmparanhos/anima
@@ -51,7 +51,7 @@ anima start
 7. Starts api + web
 
 ```
-✓ Python 3.11.x
+✓ Python 3.9.x
 ✓ Node.js v20.x
 ✓ Ollama installed
   RAM detected: 16GB → model: qwen2.5:7b
@@ -170,7 +170,7 @@ anima/
 
 | Layer | Technology |
 |-------|------------|
-| API | Python 3.11 + FastAPI |
+| API | Python 3.9 + FastAPI |
 | Database | SQLite (relational) + ChromaDB (vectors) |
 | LLM | Ollama local (llama3.1, phi3, mistral…) |
 | Embeddings | `sentence-transformers` local (no API key) |

@@ -1,3 +1,4 @@
+from __future__ import annotations
 """MCP server exposing Anima knowledge base to Claude Code and GitHub Copilot."""
 import asyncio
 import json

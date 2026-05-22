@@ -1,3 +1,4 @@
+from __future__ import annotations
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
