@@ -2,14 +2,14 @@
 /**
  * anima CLI — entry point
  *
- * Uso:
- *   anima start          → valida tudo e sobe o projeto
- *   anima setup          → só configura, sem subir
- *   anima stop           → para api e web
- *   anima api            → só a api
- *   anima web            → só o web
- *   anima model          → lista modelos Ollama disponíveis
- *   anima model <nome>   → troca o modelo (ex: anima model qwen2.5:7b)
+ * Usage:
+ *   anima start          → validates everything and starts the project
+ *   anima setup          → validates and configures without starting
+ *   anima stop           → stops api and web
+ *   anima api            → api only
+ *   anima web            → web only
+ *   anima model          → lists available Ollama models
+ *   anima model <name>   → switches the model (e.g. anima model qwen2.5:7b)
  */
 import { execSync, spawn } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
@@ -31,21 +31,21 @@ const [,, command, ...args] = process.argv
 // ─── help ─────────────────────────────────────────────────────────────────────
 if (!command || command === "--help" || command === "-h") {
   console.log(`
-${c(94, "anima")} — base de conhecimento coletiva com IA
+${c(94, "anima")} — collective knowledge base powered by AI
 
-${c(93, "Uso:")}
-  anima start              inicia o projeto completo
-  anima setup              configura sem subir os serviços
-  anima stop               para api e web
-  anima api                sobe só a api (Python/FastAPI)
-  anima web                sobe só o web (Next.js)
-  anima model              lista modelos Ollama disponíveis
-  anima model <nome>       troca o modelo (ex: qwen2.5:7b)
+${c(93, "Usage:")}
+  anima start              start the full project
+  anima setup              configure without starting services
+  anima stop               stop api and web
+  anima api                start api only (Python/FastAPI)
+  anima web                start web only (Next.js)
+  anima model              list available Ollama models
+  anima model <name>       switch model (e.g. qwen2.5:7b)
 `)
   process.exit(0)
 }
 
-// ─── comandos ────────────────────────────────────────────────────────────────
+// ─── commands ────────────────────────────────────────────────────────────────
 switch (command) {
   case "start": {
     const { default: start } = await import("./start.mjs")
@@ -80,21 +80,21 @@ switch (command) {
   case "model": {
     const name = args[0]
     if (!name) {
-      info("Modelos disponíveis:")
+      info("Available models:")
       execSync("ollama list", { stdio: "inherit" })
     } else {
       const envPath = join(API, ".env")
-      if (!existsSync(envPath)) fail(".env não encontrado. Rode 'anima setup' primeiro.")
+      if (!existsSync(envPath)) fail(".env not found. Run 'anima setup' first.")
       const content = readFileSync(envPath, "utf8")
         .replace(/^OLLAMA_MODEL=.*/m, `OLLAMA_MODEL=${name}`)
       writeFileSync(envPath, content)
-      ok(`Modelo alterado para ${name}`)
-      info("Baixando se necessário...")
+      ok(`Model switched to ${name}`)
+      info("Pulling if needed...")
       execSync(`ollama pull ${name}`, { stdio: "inherit" })
     }
     break
   }
 
   default:
-    fail(`Comando desconhecido: "${command}". Use 'anima --help' para ver os comandos.`)
+    fail(`Unknown command: "${command}". Use 'anima --help' to see available commands.`)
 }

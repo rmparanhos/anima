@@ -41,11 +41,11 @@ async def list_tools() -> list[Tool]:
     return [
         Tool(
             name="search_knowledge",
-            description="Busca informações na base de conhecimento Anima usando busca semântica.",
+            description="Search the Anima knowledge base using semantic search.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "description": "Pergunta ou termo para buscar"}
+                    "query": {"type": "string", "description": "Question or term to search for"}
                 },
                 "required": ["query"],
             },
@@ -53,13 +53,13 @@ async def list_tools() -> list[Tool]:
         Tool(
             name="ask_question",
             description=(
-                "Faz uma pergunta ao Anima. Responde com o que sabe; "
-                "se não souber, registra como pendente para a comunidade responder."
+                "Ask Anima a question. Returns what it knows; "
+                "if it doesn't know, registers the question as pending for the community to answer."
             ),
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "question": {"type": "string", "description": "Pergunta a ser respondida"}
+                    "question": {"type": "string", "description": "Question to be answered"}
                 },
                 "required": ["question"],
             },
@@ -75,7 +75,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         chunks = await semantic_search(embedding)
 
         if not chunks:
-            return [TextContent(type="text", text="Nenhum resultado encontrado na base de conhecimento.")]
+            return [TextContent(type="text", text="No results found in the knowledge base.")]
 
         results = []
         for i, chunk in enumerate(chunks, 1):
@@ -106,9 +106,9 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         return [TextContent(
             type="text",
             text=(
-                f"Não encontrei essa informação na base de conhecimento. "
-                f"Registrei sua pergunta (ID: {q.id}). "
-                f"Acesse /pending no Anima para ver e responder."
+                f"I couldn't find this information in the knowledge base. "
+                f"Your question has been registered (ID: {q.id}). "
+                f"Visit /pending in Anima to view and answer it."
             ),
         )]
 

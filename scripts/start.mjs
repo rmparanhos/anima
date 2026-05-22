@@ -30,11 +30,11 @@ export default async function start() {
   installNodeDeps()
 
   console.log()
-  ok("Tudo pronto! Iniciando Anima...\n")
+  ok("All good! Starting Anima...\n")
   console.log(`   ${c(94, "API")}     → http://localhost:8000`)
   console.log(`   ${c(94, "Swagger")} → http://localhost:8000/docs`)
   console.log(`   ${c(94, "Web")}     → http://localhost:3000`)
-  console.log(`\n   Pressione ${c(93, "Ctrl+C")} para parar tudo.\n`)
+  console.log(`\n   Press ${c(93, "Ctrl+C")} to stop.\n`)
 
   const procs = [
     spawn(py, ["-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
@@ -43,7 +43,7 @@ export default async function start() {
   ]
 
   const shutdown = () => {
-    info("Encerrando Anima...")
+    info("Shutting down Anima...")
     procs.forEach(p => p.kill())
     process.exit(0)
   }
@@ -53,7 +53,7 @@ export default async function start() {
   procs.forEach(p => p.on("exit", shutdown))
 }
 
-// chamado direto (npm start)
+// direct call (npm start)
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await start()
 }

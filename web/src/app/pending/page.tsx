@@ -33,17 +33,17 @@ export default function PendingPage() {
   if (!userId) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
-        <p className="text-zinc-400 text-sm">Faça login no <a href="/chat" className="underline">chat</a> primeiro.</p>
+        <p className="text-zinc-400 text-sm">Sign in at <a href="/chat" className="underline">chat</a> first.</p>
       </div>
     )
   }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold mb-6">Perguntas Pendentes</h1>
+      <h1 className="text-xl font-bold mb-6">Pending Questions</h1>
 
-      {isLoading && <p className="text-zinc-500 text-sm">Carregando...</p>}
-      {data?.questions.length === 0 && <p className="text-zinc-500 text-sm">Nenhuma pergunta pendente.</p>}
+      {isLoading && <p className="text-zinc-500 text-sm">Loading...</p>}
+      {data?.questions.length === 0 && <p className="text-zinc-500 text-sm">No pending questions.</p>}
 
       <div className="space-y-4">
         {data?.questions.map((q: Question) => (
@@ -63,7 +63,7 @@ export default function PendingPage() {
                 <textarea
                   className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-zinc-500 resize-none"
                   rows={4}
-                  placeholder="Escreva sua resposta..."
+                  placeholder="Write your answer..."
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
                 />
@@ -73,9 +73,9 @@ export default function PendingPage() {
                     disabled={!answerText.trim() || answerMutation.isPending}
                     className="bg-white text-black rounded px-3 py-1.5 text-sm font-semibold hover:bg-zinc-200 disabled:opacity-50"
                   >
-                    {answerMutation.isPending ? "Enviando..." : "Responder"}
+                    {answerMutation.isPending ? "Submitting..." : "Answer"}
                   </button>
-                  <button onClick={() => setAnswering(null)} className="text-sm text-zinc-500 hover:text-white">Cancelar</button>
+                  <button onClick={() => setAnswering(null)} className="text-sm text-zinc-500 hover:text-white">Cancel</button>
                 </div>
               </div>
             ) : (
@@ -83,7 +83,7 @@ export default function PendingPage() {
                 onClick={() => setAnswering(q.id)}
                 className="text-xs text-zinc-400 hover:text-white underline"
               >
-                responder
+                answer
               </button>
             )}
           </div>

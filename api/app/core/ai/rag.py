@@ -2,10 +2,10 @@ from __future__ import annotations
 from app.core.knowledge.search import ChunkWithScore
 from app.core.ai.confidence import INSUFFICIENT_MARKER
 
-SYSTEM_PROMPT = f"""Você é Anima, um assistente de base de conhecimento coletiva.
-Responda APENAS com base no contexto fornecido abaixo.
-Se o contexto não for suficiente ou não existir, responda exatamente: {INSUFFICIENT_MARKER}
-Seja direto e preciso. Não invente informações."""
+SYSTEM_PROMPT = f"""You are Anima, a collective knowledge base assistant.
+Answer ONLY based on the context provided below.
+If the context is insufficient or missing, respond exactly: {INSUFFICIENT_MARKER}
+Be direct and precise. Do not make up information."""
 
 
 def build_messages(
@@ -17,7 +17,7 @@ def build_messages(
 
     user_content = query
     if context_text:
-        user_content = f"CONTEXTO:\n{context_text}\n\nPERGUNTA: {query}"
+        user_content = f"CONTEXT:\n{context_text}\n\nQUESTION: {query}"
 
     messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages.extend(history[-6:])  # last 3 turns

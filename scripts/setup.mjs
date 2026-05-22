@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Valida e configura todos os componentes do Anima.
- * Chamado por: npm run setup  ou  npm start (automaticamente)
+ * Validates and configures all Anima components.
+ * Called by: npm run setup  or  npm start (automatically)
  */
 import { execSync, spawn } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync, copyFileSync } from "node:fs"
@@ -13,7 +13,7 @@ const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 const API  = join(ROOT, "api")
 const WEB  = join(ROOT, "web")
 
-// ─── cores ───────────────────────────────────────────────────────────────────
+// ─── colors ──────────────────────────────────────────────────────────────────
 const NO_COLOR = !process.stdout.isTTY || process.env.NO_COLOR
 const c = (code, txt) => NO_COLOR ? txt : `\x1b[${code}m${txt}\x1b[0m`
 
@@ -32,16 +32,16 @@ const has = (bin) => {
 
 // ─── 1. Python ───────────────────────────────────────────────────────────────
 export function checkPython() {
-  info("Verificando Python...")
+  info("Checking Python...")
   if (!has("python3") && !has("python"))
-    fail("Python 3.9+ não encontrado. Instale em https://python.org")
+    fail("Python 3.9+ not found. Install it at https://python.org")
 
   const py = has("python3") ? "python3" : "python"
   const ver = execSync(`${py} --version`, { encoding: "utf8" }).trim()
   const [, major, minor] = ver.match(/(\d+)\.(\d+)/) ?? []
 
   if (Number(major) < 3 || (Number(major) === 3 && Number(minor) < 9))
-    fail(`Python 3.9+ necessário (encontrado: ${ver})`)
+    fail(`Python 3.9+ required (found: ${ver})`)
 
   ok(ver)
   return py
@@ -49,79 +49,79 @@ export function checkPython() {
 
 // ─── 2. Node ─────────────────────────────────────────────────────────────────
 export function checkNode() {
-  info("Verificando Node.js...")
+  info("Checking Node.js...")
   const ver = process.version
   const major = Number(ver.slice(1).split(".")[0])
-  if (major < 18) fail(`Node.js 18+ necessário (encontrado: ${ver})`)
+  if (major < 18) fail(`Node.js 18+ required (found: ${ver})`)
   ok(`Node.js ${ver}`)
 }
 
 // ─── 3. Ollama ───────────────────────────────────────────────────────────────
 export function checkOllama() {
-  info("Verificando Ollama...")
-  if (has("ollama")) { ok("Ollama instalado"); return }
+  info("Checking Ollama...")
+  if (has("ollama")) { ok("Ollama installed"); return }
 
-  warn("Ollama não encontrado. Instalando...")
+  warn("Ollama not found. Installing...")
   const sys = platform()
 
   if (sys === "darwin" || sys === "linux") {
     run("curl -fsSL https://ollama.com/install.sh | sh")
   } else if (sys === "win32") {
     if (has("winget")) run("winget install Ollama.Ollama -e --silent")
-    else fail("Instale o Ollama em https://ollama.com/download/windows e rode novamente.")
+    else fail("Install Ollama from https://ollama.com/download/windows and run again.")
   }
-  ok("Ollama instalado")
+  ok("Ollama installed")
 }
 
-// ─── 4. RAM + modelo ─────────────────────────────────────────────────────────
+// ─── 4. RAM + model ──────────────────────────────────────────────────────────
 export function detectModel(forcedModel) {
   if (forcedModel) return forcedModel
   const ramGb = Math.round(totalmem() / 1024 ** 3)
   const model = ramGb >= 16 ? "qwen2.5:7b" : "qwen2.5:3b"
-  console.log(`   RAM detectada: ${ramGb}GB → modelo: ${c(93, model)}`)
+  console.log(`   RAM detected: ${ramGb}GB → model: ${c(93, model)}`)
   return model
 }
 
-// ─── 5. Sobe Ollama se necessário ────────────────────────────────────────────
+// ─── 5. Start Ollama if needed ───────────────────────────────────────────────
 export async function startOllama() {
-  info("Verificando serviço Ollama...")
+  info("Checking Ollama service...")
   const running = await fetch("http://localhost:11434").then(() => true).catch(() => false)
-  if (running) { ok("Ollama já está rodando"); return }
+  if (running) { ok("Ollama already running"); return }
 
-  warn("Iniciando Ollama em segundo plano...")
+  warn("Starting Ollama in background...")
   const proc = spawn("ollama", ["serve"], { stdio: "ignore", detached: true })
-  proc.on("error", () => fail("Ollama não encontrado. Instale em https://ollama.com e rode novamente."))
+  proc.on("error", () => fail("Ollama not found. Install it at https://ollama.com and run again."))
   proc.unref()
 
   for (let i = 0; i < 10; i++) {
     await new Promise(r => setTimeout(r, 1000))
     const up = await fetch("http://localhost:11434").then(() => true).catch(() => false)
-    if (up) { ok("Ollama iniciado"); return }
+    if (up) { ok("Ollama started"); return }
   }
-  fail("Não foi possível iniciar o Ollama. Tente 'ollama serve' manualmente.")
+  fail("Could not start Ollama. Try running 'ollama serve' manually.")
 }
 
-// ─── 6. Baixa modelo ─────────────────────────────────────────────────────────
+// ─── 6. Pull model ───────────────────────────────────────────────────────────
 export function pullModel(model) {
-  info(`Verificando modelo ${model}...`)
+  info(`Checking model ${model}...`)
   const list = execSync("ollama list", { encoding: "utf8" })
-  if (list.includes(model.split(":")[0])) { ok(`Modelo ${model} disponível`); return }
+  if (list.includes(model.split(":")[0])) { ok(`Model ${model} available`); return }
 
-  warn(`Baixando ${model} (pode demorar alguns minutos)...`)
+  warn(`Downloading ${model} (this may take a few minutes)...`)
   run(`ollama pull ${model}`)
-  ok(`Modelo ${model} pronto`)
+  ok(`Model ${model} ready`)
 }
 
-// ─── 7. Dependências Python ───────────────────────────────────────────────────
+// ─── 7. Python dependencies ──────────────────────────────────────────────────
 export function installPythonDeps(py) {
-  info("Verificando dependências Python...")
+  info("Checking Python dependencies...")
   try {
     execSync(`${py} -c "import fastapi"`, { stdio: "pipe" })
-    ok("Dependências Python OK")
+    ok("Python dependencies OK")
   } catch {
-    warn("Instalando dependências Python...")
+    warn("Installing Python dependencies...")
     run(`${py} -m pip install -e "${API}[dev]" -q`)
-    ok("Dependências Python instaladas")
+    ok("Python dependencies installed")
   }
 }
 
@@ -129,41 +129,41 @@ export function installPythonDeps(py) {
 export function setupEnv(model) {
   const envPath = join(API, ".env")
   if (!existsSync(envPath)) {
-    warn(".env não encontrado. Criando...")
+    warn(".env not found. Creating...")
     let content = readFileSync(join(API, ".env.example"), "utf8")
     content = content.replace(/^OLLAMA_MODEL=.*/m, `OLLAMA_MODEL=${model}`)
     writeFileSync(envPath, content)
-    ok(`.env criado com OLLAMA_MODEL=${model}`)
+    ok(`.env created with OLLAMA_MODEL=${model}`)
   } else {
-    ok(".env encontrado")
+    ok(".env found")
   }
 
   const envLocal = join(WEB, ".env.local")
   if (!existsSync(envLocal)) {
     copyFileSync(join(WEB, ".env.local.example"), envLocal)
-    ok(".env.local criado")
+    ok(".env.local created")
   }
 }
 
-// ─── 9. Migrações ────────────────────────────────────────────────────────────
+// ─── 9. Migrations ───────────────────────────────────────────────────────────
 export function runMigrations(py) {
-  info("Verificando banco de dados...")
-  if (existsSync(join(API, "anima.db"))) { ok("Banco OK"); return }
-  warn("Criando banco de dados...")
+  info("Checking database...")
+  if (existsSync(join(API, "anima.db"))) { ok("Database OK"); return }
+  warn("Creating database...")
   run(`${py} -m alembic upgrade head`, { cwd: API })
-  ok("Banco criado")
+  ok("Database created")
 }
 
-// ─── 10. Deps Node ────────────────────────────────────────────────────────────
+// ─── 10. Node deps ───────────────────────────────────────────────────────────
 export function installNodeDeps() {
-  info("Verificando dependências Node.js (web)...")
-  if (existsSync(join(WEB, "node_modules"))) { ok("Dependências Node.js OK"); return }
-  warn("Instalando dependências Node.js...")
+  info("Checking Node.js dependencies (web)...")
+  if (existsSync(join(WEB, "node_modules"))) { ok("Node.js dependencies OK"); return }
+  warn("Installing Node.js dependencies...")
   run("npm install --silent", { cwd: WEB })
-  ok("Dependências Node.js instaladas")
+  ok("Node.js dependencies installed")
 }
 
-// ─── export default (usado pelo anima CLI) ────────────────────────────────────
+// ─── export default (used by anima CLI) ──────────────────────────────────────
 export default async function setup() {
   console.log(c(94, "\n╔══════════════════╗\n║   anima setup    ║\n╚══════════════════╝\n"))
 
@@ -179,10 +179,10 @@ export default async function setup() {
   installNodeDeps()
 
   console.log()
-  ok("Setup completo! Rode 'anima start' para iniciar.")
+  ok("Setup complete! Run 'anima start' to launch.")
 }
 
-// ─── chamado direto (npm run setup) ──────────────────────────────────────────
+// ─── direct call (npm run setup) ─────────────────────────────────────────────
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   await setup()
 }

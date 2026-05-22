@@ -46,8 +46,8 @@ async def process_message(
 
     if not confidence.is_confident:
         final_content = (
-            "Não encontrei essa informação na base de conhecimento. "
-            "Registrei sua pergunta — qualquer pessoa pode respondê-la em /pending."
+            "I couldn't find this information in the knowledge base. "
+            "Your question has been registered — anyone can answer it at /pending."
         )
         question = await create_pending_question(content, user_id, user_msg.id, query_embedding, db)
         question_id = question.id
