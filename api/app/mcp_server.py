@@ -7,9 +7,13 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from mcp.server import Server
-from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+try:
+    from mcp.server import Server
+    from mcp.server.stdio import stdio_server
+    from mcp.types import Tool, TextContent
+except ImportError:
+    print("MCP package not installed. Run: pip install 'anima[mcp]'", file=sys.stderr)
+    sys.exit(1)
 
 from app.config import settings
 from app.core.ai.embedder import embedder

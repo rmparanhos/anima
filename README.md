@@ -112,6 +112,12 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ## Integration with Claude Code / GitHub Copilot (MCP)
 
+First install the optional MCP dependency:
+
+```bash
+pip install "anima[mcp]"   # from the api/ directory, or use the full path
+```
+
 Add to your `~/.claude/claude_desktop_config.json` or `.mcp.json`:
 
 ```json
