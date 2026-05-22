@@ -31,12 +31,24 @@ Like Stack Overflow, but with AI as the main mediator. Anyone can ask and anyone
 ```bash
 git clone https://github.com/rmparanhos/anima
 cd anima
-bash start.sh
+python start.py
 ```
 
-The script handles everything:
+After the first setup, the `anima` command becomes available directly in your terminal:
+
+```bash
+anima start      # validates everything and starts the project
+anima setup      # validates and configures without starting
+anima stop       # stops backend and frontend
+anima backend    # backend only
+anima frontend   # frontend only
+anima model                  # lists available models
+anima model qwen2.5:7b       # switches the Ollama model
+```
+
+The script handles everything on first run:
 1. Checks Python and Node.js
-2. Installs Ollama if not present
+2. Installs Ollama if not present (Mac, Linux, Windows)
 3. Detects your RAM and downloads the right model automatically
 4. Installs Python and Node.js dependencies
 5. Creates `.env` files from the examples
@@ -47,8 +59,8 @@ The script handles everything:
 ✓ Python 3.11.x
 ✓ Node.js v20.x
 ✓ Ollama installed
-  RAM detected: 16GB → recommended model: llama3.1:8b
-✓ Model llama3.1:8b available
+  RAM detected: 16GB → model: qwen2.5:7b
+✓ Model qwen2.5:7b available
 ✓ Python dependencies OK
 ✓ Database OK
 ✓ Node.js dependencies OK
@@ -58,15 +70,6 @@ Swagger  → http://localhost:8000/docs
 Frontend → http://localhost:3000
 
 Press Ctrl+C to stop everything.
-```
-
-### Other commands
-
-```bash
-make start      # same as bash start.sh
-make backend    # backend only
-make frontend   # frontend only
-make stop       # stop everything
 ```
 
 ---
@@ -80,7 +83,7 @@ Generated automatically by `start.sh`. For manual adjustment:
 DATABASE_URL=sqlite+aiosqlite:///./anima.db
 CHROMA_PATH=./chroma_db
 OLLAMA_BASE_URL=http://localhost:11434/v1
-OLLAMA_MODEL=llama3.1:8b   # or phi3:mini for 8GB RAM
+OLLAMA_MODEL=qwen2.5:7b    # or qwen2.5:3b for 8GB RAM
 
 # frontend/.env.local
 NEXT_PUBLIC_API_URL=http://localhost:8000

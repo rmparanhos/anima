@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     # Ollama — roda localmente, sem API key
     # 16GB RAM → llama3.1:8b  |  8GB RAM → phi3:mini ou llama3.2:3b
     ollama_base_url: str = "http://localhost:11434/v1"
-    ollama_model: str = "llama3.1:8b"
+    ollama_model: str = "qwen2.5:7b"
 
     rag_confidence_threshold: float = 0.72
     rag_top_k: int = 5

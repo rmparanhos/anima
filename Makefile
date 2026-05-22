@@ -1,18 +1,19 @@
-.PHONY: start setup stop backend frontend
+.PHONY: start setup stop backend frontend model
 
 start:
-	@bash start.sh
+	python start.py start
 
 setup:
-	@bash start.sh --setup-only 2>/dev/null || bash start.sh
-
-backend:
-	@cd backend && uvicorn app.main:app --reload
-
-frontend:
-	@cd frontend && npm run dev
+	python start.py setup
 
 stop:
-	@pkill -f "uvicorn app.main" 2>/dev/null || true
-	@pkill -f "next dev" 2>/dev/null || true
-	@echo "Anima parado."
+	python start.py stop
+
+backend:
+	python start.py backend
+
+frontend:
+	python start.py frontend
+
+model:
+	python start.py model $(name)
