@@ -1,4 +1,4 @@
-.PHONY: start setup stop backend frontend model
+.PHONY: start setup stop api web model
 
 start:
 	python start.py start
@@ -9,11 +9,11 @@ setup:
 stop:
 	python start.py stop
 
-backend:
-	python start.py backend
+api:
+	python start.py api
 
-frontend:
-	python start.py frontend
+web:
+	python start.py web
 
 model:
 	python start.py model $(name)

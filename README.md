@@ -39,9 +39,9 @@ After the first setup, the `anima` command becomes available directly in your te
 ```bash
 anima start      # validates everything and starts the project
 anima setup      # validates and configures without starting
-anima stop       # stops backend and frontend
-anima backend    # backend only
-anima frontend   # frontend only
+anima stop       # stops api and web
+anima api        # api only
+anima web        # web only
 anima model                  # lists available models
 anima model qwen2.5:7b       # switches the Ollama model
 ```
@@ -53,7 +53,7 @@ The script handles everything on first run:
 4. Installs Python and Node.js dependencies
 5. Creates `.env` files from the examples
 6. Runs database migrations
-7. Starts backend + frontend
+7. Starts api + web
 
 ```
 ✓ Python 3.11.x
@@ -65,9 +65,9 @@ The script handles everything on first run:
 ✓ Database OK
 ✓ Node.js dependencies OK
 
-Backend  → http://localhost:8000
+API  → http://localhost:8000
 Swagger  → http://localhost:8000/docs
-Frontend → http://localhost:3000
+Web  → http://localhost:3000
 
 Press Ctrl+C to stop everything.
 ```
@@ -76,16 +76,16 @@ Press Ctrl+C to stop everything.
 
 ## Environment variables
 
-Generated automatically by `start.sh`. For manual adjustment:
+Generated automatically by `start.py`. For manual adjustment:
 
 ```bash
-# backend/.env
+# api/.env
 DATABASE_URL=sqlite+aiosqlite:///./anima.db
 CHROMA_PATH=./chroma_db
 OLLAMA_BASE_URL=http://localhost:11434/v1
 OLLAMA_MODEL=qwen2.5:7b    # or qwen2.5:3b for 8GB RAM
 
-# frontend/.env.local
+# web/.env.local
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
@@ -113,7 +113,7 @@ Add to your `~/.claude/claude_desktop_config.json` or `.mcp.json`:
     "anima": {
       "command": "python",
       "args": ["-m", "app.mcp_server"],
-      "cwd": "/path/to/anima/backend",
+      "cwd": "/path/to/anima/api",
       "env": {
         "OLLAMA_BASE_URL": "http://localhost:11434/v1",
         "OLLAMA_MODEL": "llama3.1:8b"
@@ -133,9 +133,9 @@ Available tools:
 
 ```
 anima/
-├── start.sh                     # entry point — validates and starts everything
+├── start.py                     # entry point — validates and starts everything
 ├── Makefile                     # shortcuts: make start, make stop…
-├── backend/
+├── api/
 │   ├── app/
 │   │   ├── api/v1/              # endpoints (chat, questions, knowledge, users)
 │   │   ├── core/
@@ -145,7 +145,7 @@ anima/
 │   │   ├── services/            # chat_service, question_service, knowledge_service
 │   │   └── mcp_server.py        # MCP Server for editors
 │   └── alembic/                 # database migrations
-└── frontend/
+└── web/
     └── src/
         ├── app/
         │   ├── chat/            # chat interface
@@ -162,10 +162,10 @@ anima/
 
 | Layer | Technology |
 |-------|------------|
-| Backend | Python 3.11 + FastAPI |
+| API | Python 3.11 + FastAPI |
 | Database | SQLite (relational) + ChromaDB (vectors) |
 | LLM | Ollama local (llama3.1, phi3, mistral…) |
 | Embeddings | `sentence-transformers` local (no API key) |
-| Frontend | Next.js 14 + TypeScript + Tailwind |
+| Web | Next.js 14 + TypeScript + Tailwind |
 
 Zero API keys. Zero Docker. Zero external services.

@@ -1,12 +1,12 @@
 """
 CLI do Anima.
 
-Disponível como comando após `pip install -e backend/`:
+Disponível como comando após `pipx install ./api`:
     anima start     — valida tudo e sobe o projeto
-    anima stop      — para backend e frontend
+    anima stop      — para api e web
     anima setup     — só configura, não sobe
-    anima backend   — só o backend
-    anima frontend  — só o frontend
+    anima api       — só a api
+    anima web       — só o web
     anima model     — troca o modelo Ollama
 """
 import argparse
@@ -20,8 +20,8 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent.parent  # raiz do repositório
-BACKEND = ROOT / "backend"
-FRONTEND = ROOT / "frontend"
+API = ROOT / "api"
+WEB = ROOT / "web"
 
 # ─── terminal colors ──────────────────────────────────────────────────────────
 _NO_COLOR = not sys.stdout.isatty() or os.environ.get("NO_COLOR")
@@ -169,15 +169,15 @@ def install_python_deps() -> None:
         ok("Dependências Python OK")
     except ImportError:
         warn("Instalando dependências Python...")
-        run([sys.executable, "-m", "pip", "install", "-e", str(BACKEND / "[dev]"), "-q"], check=True)
+        run([sys.executable, "-m", "pip", "install", "-e", str(API / "[dev]"), "-q"], check=True)
         ok("Dependências Python instaladas")
 
 
 def setup_env(model: str) -> None:
-    env_path = BACKEND / ".env"
+    env_path = API / ".env"
     if not env_path.exists():
         warn(".env não encontrado. Criando...")
-        content = (BACKEND / ".env.example").read_text()
+        content = (API / ".env.example").read_text()
         content = "\n".join(
             f"OLLAMA_MODEL={model}" if line.startswith("OLLAMA_MODEL=") else line
             for line in content.splitlines()
@@ -187,30 +187,30 @@ def setup_env(model: str) -> None:
     else:
         ok(".env encontrado")
 
-    env_local = FRONTEND / ".env.local"
+    env_local = WEB / ".env.local"
     if not env_local.exists():
-        shutil.copy(FRONTEND / ".env.local.example", env_local)
+        shutil.copy(WEB / ".env.local.example", env_local)
         ok(".env.local criado")
 
 
 def run_migrations() -> None:
     info("Verificando banco de dados...")
-    db_path = BACKEND / "anima.db"
+    db_path = API / "anima.db"
     if db_path.exists():
         ok("Banco OK")
         return
     warn("Criando banco de dados...")
-    run(["alembic", "upgrade", "head", "-q"], cwd=BACKEND, check=True)
+    run(["alembic", "upgrade", "head", "-q"], cwd=API, check=True)
     ok("Banco criado")
 
 
 def install_node_deps() -> None:
     info("Verificando dependências Node.js...")
-    if (FRONTEND / "node_modules").exists():
+    if (WEB / "node_modules").exists():
         ok("Dependências Node.js OK")
         return
     warn("Instalando dependências Node.js...")
-    run(["npm", "install", "--silent"], cwd=FRONTEND, check=True)
+    run(["npm", "install", "--silent"], cwd=WEB, check=True)
     ok("Dependências Node.js instaladas")
 
 
@@ -240,7 +240,7 @@ def cmd_setup(args) -> None:
 
 
 def cmd_start(args) -> None:
-    """Valida tudo e sobe backend + frontend."""
+    """Valida tudo e sobe api + web."""
     header("anima start")
 
     check_python()
@@ -277,21 +277,21 @@ def cmd_start(args) -> None:
     signal.signal(signal.SIGINT, shutdown)
     signal.signal(signal.SIGTERM, shutdown)
 
-    backend_cmd = [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-    frontend_cmd = ["npm", "run", "dev"]
+    api_cmd = [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    web_cmd = ["npm", "run", "dev"]
 
-    procs.append(subprocess.Popen(backend_cmd, cwd=BACKEND))
-    procs.append(subprocess.Popen(frontend_cmd, cwd=FRONTEND))
+    procs.append(subprocess.Popen(api_cmd, cwd=API))
+    procs.append(subprocess.Popen(web_cmd, cwd=WEB))
 
     for p in procs:
         p.wait()
 
 
 def cmd_stop(args) -> None:
-    """Para backend e frontend."""
+    """Para api e web."""
     info("Parando Anima...")
     killed = 0
-    for name, pattern in [("backend", "uvicorn"), ("frontend", "next")]:
+    for name, pattern in [("api", "uvicorn"), ("web", "next")]:
         r = subprocess.run(["pkill", "-f", pattern], capture_output=True)
         if r.returncode == 0:
             ok(f"{name} parado")
@@ -300,21 +300,21 @@ def cmd_stop(args) -> None:
         warn("Nenhum processo encontrado.")
 
 
-def cmd_backend(args) -> None:
-    """Sobe só o backend."""
+def cmd_api(args) -> None:
+    """Sobe só a api."""
     run_migrations()
-    run([sys.executable, "-m", "uvicorn", "app.main:app", "--reload"], cwd=BACKEND)
+    run([sys.executable, "-m", "uvicorn", "app.main:app", "--reload"], cwd=API)
 
 
-def cmd_frontend(args) -> None:
-    """Sobe só o frontend."""
-    run(["npm", "run", "dev"], cwd=FRONTEND)
+def cmd_web(args) -> None:
+    """Sobe só o web."""
+    run(["npm", "run", "dev"], cwd=WEB)
 
 
 def cmd_model(args) -> None:
     """Lista ou troca o modelo Ollama."""
     if args.name:
-        env_path = BACKEND / ".env"
+        env_path = API / ".env"
         if env_path.exists():
             lines = env_path.read_text().splitlines()
             new_lines = [
@@ -339,8 +339,8 @@ def cmd_model(args) -> None:
 # ─── entry point ─────────────────────────────────────────────────────────────
 def main() -> None:
     # Ajusta sys.path para encontrar o pacote quando rodado via python start.py
-    if str(BACKEND) not in sys.path:
-        sys.path.insert(0, str(BACKEND))
+    if str(API) not in sys.path:
+        sys.path.insert(0, str(API))
 
     parser = argparse.ArgumentParser(
         prog="anima",
@@ -359,16 +359,16 @@ def main() -> None:
     p_setup.set_defaults(func=cmd_setup)
 
     # stop
-    p_stop = sub.add_parser("stop", help="para backend e frontend")
+    p_stop = sub.add_parser("stop", help="para api e web")
     p_stop.set_defaults(func=cmd_stop)
 
-    # backend
-    p_be = sub.add_parser("backend", help="sobe só o backend")
-    p_be.set_defaults(func=cmd_backend)
+    # api
+    p_be = sub.add_parser("api", help="sobe só a api")
+    p_be.set_defaults(func=cmd_api)
 
-    # frontend
-    p_fe = sub.add_parser("frontend", help="sobe só o frontend")
-    p_fe.set_defaults(func=cmd_frontend)
+    # web
+    p_fe = sub.add_parser("web", help="sobe só o web")
+    p_fe.set_defaults(func=cmd_web)
 
     # model
     p_model = sub.add_parser("model", help="lista ou troca o modelo Ollama")
