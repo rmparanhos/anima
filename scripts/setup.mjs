@@ -4,7 +4,7 @@
  * Called by: npm run setup  or  npm start (automatically)
  */
 import { execSync, spawn } from "node:child_process"
-import { existsSync, readFileSync, writeFileSync, copyFileSync } from "node:fs"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { platform, totalmem } from "node:os"
@@ -140,7 +140,7 @@ export function setupEnv(model) {
 
   const envLocal = join(WEB, ".env.local")
   if (!existsSync(envLocal)) {
-    copyFileSync(join(WEB, ".env.local.example"), envLocal)
+    writeFileSync(envLocal, "NEXT_PUBLIC_API_URL=http://localhost:8000\n")
     ok(".env.local created")
   }
 }
