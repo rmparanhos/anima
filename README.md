@@ -26,76 +26,67 @@ Usuário pergunta
 
 ## Rodando localmente
 
-**Pré-requisitos:** Python 3.11+ e Node 18+
-
-### Backend
+**Pré-requisitos:** Python 3.11+ e Node 18+. O resto é instalado automaticamente.
 
 ```bash
-cd backend
-pip install -e ".[dev]"
-
-# Copie e preencha as variáveis
-cp .env.example .env
-
-# Cria o banco (SQLite local)
-alembic upgrade head
-
-# Sobe o servidor
-uvicorn app.main:app --reload
-# → http://localhost:8000
-# → http://localhost:8000/docs  (Swagger)
+git clone https://github.com/rmparanhos/anima
+cd anima
+bash start.sh
 ```
 
-### Frontend
+O script cuida de tudo:
+1. Verifica Python e Node.js
+2. Instala o Ollama se não estiver instalado
+3. Detecta sua RAM e baixa o modelo certo automaticamente
+4. Instala dependências Python e Node.js
+5. Cria os arquivos `.env` a partir dos exemplos
+6. Roda as migrações do banco
+7. Sobe backend + frontend
+
+```
+✓ Python 3.11.x
+✓ Node.js v20.x
+✓ Ollama instalado
+  RAM detectada: 16GB → modelo recomendado: llama3.1:8b
+✓ Modelo llama3.1:8b disponível
+✓ Dependências Python OK
+✓ Banco OK
+✓ Dependências Node.js OK
+
+Backend  → http://localhost:8000
+Swagger  → http://localhost:8000/docs
+Frontend → http://localhost:3000
+
+Pressione Ctrl+C para parar tudo.
+```
+
+### Outros comandos
 
 ```bash
-cd frontend
-npm install
-cp .env.local.example .env.local
-npm run dev
-# → http://localhost:3000
+make start      # igual ao bash start.sh
+make backend    # só o backend
+make frontend   # só o frontend
+make stop       # para tudo
 ```
 
 ---
 
-## Pré-requisito: Ollama
-
-O Anima roda **100% local**, sem nenhuma API key.
-
-```bash
-# 1. instala o Ollama (apenas uma vez)
-curl -fsSL https://ollama.com/install.sh | sh   # Linux/Mac
-
-# 2. baixa o modelo (escolha conforme sua RAM)
-ollama pull llama3.1:8b   # 16GB RAM → melhor qualidade (~5GB download)
-ollama pull phi3:mini      # 8GB RAM  → mais leve (~2GB download)
-ollama pull llama3.2:3b   # 8GB RAM  → alternativa ao phi3
-
-# 3. Ollama fica rodando em http://localhost:11434
-```
-
 ## Variáveis de ambiente
 
+Geradas automaticamente pelo `start.sh`. Para ajuste manual:
+
 ```bash
-# backend/.env  (copie de .env.example)
+# backend/.env
 DATABASE_URL=sqlite+aiosqlite:///./anima.db
 CHROMA_PATH=./chroma_db
-
 OLLAMA_BASE_URL=http://localhost:11434/v1
-OLLAMA_MODEL=llama3.1:8b   # troque por phi3:mini se tiver 8GB de RAM
+OLLAMA_MODEL=llama3.1:8b   # ou phi3:mini para 8GB de RAM
 
-# ajustes opcionais
-RAG_CONFIDENCE_THRESHOLD=0.72
-RAG_TOP_K=5
-QUESTION_DEDUP_THRESHOLD=0.90
-```
-
-> Embeddings também rodam **localmente** via `sentence-transformers` (`all-MiniLM-L6-v2`, ~90MB, baixado automaticamente). **Nenhuma API key necessária em nenhuma etapa.**
-
-```bash
 # frontend/.env.local
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
+
+> Embeddings e LLM rodam **100% local**. Nenhuma API key necessária.
 
 ---
 
@@ -139,25 +130,27 @@ Ferramentas disponíveis:
 
 ```
 anima/
+├── start.sh                     # ponto de entrada — valida e sobe tudo
+├── Makefile                     # atalhos: make start, make stop…
 ├── backend/
 │   ├── app/
-│   │   ├── api/v1/          # endpoints (chat, questions, knowledge, users)
+│   │   ├── api/v1/              # endpoints (chat, questions, knowledge, users)
 │   │   ├── core/
-│   │   │   ├── ai/          # claude.py, embedder.py, rag.py, confidence.py
-│   │   │   └── knowledge/   # search.py (ChromaDB), ingestion.py
-│   │   ├── models/          # SQLAlchemy: User, Conversation, Message, Question, KnowledgeChunk
-│   │   ├── services/        # chat_service, question_service, knowledge_service
-│   │   └── mcp_server.py    # MCP Server para editores
-│   └── alembic/             # migrações do banco
+│   │   │   ├── ai/              # llm (ollama), embedder, rag, confidence
+│   │   │   └── knowledge/       # search (ChromaDB), ingestion
+│   │   ├── models/              # SQLAlchemy: User, Conversation, Message, Question, KnowledgeChunk
+│   │   ├── services/            # chat_service, question_service, knowledge_service
+│   │   └── mcp_server.py        # MCP Server para editores
+│   └── alembic/                 # migrações do banco
 └── frontend/
     └── src/
         ├── app/
-        │   ├── chat/        # interface de chat
-        │   ├── pending/     # perguntas pendentes
-        │   └── docs/        # wiki da base
+        │   ├── chat/            # interface de chat
+        │   ├── pending/         # perguntas pendentes
+        │   └── docs/            # wiki da base
         └── lib/
-            ├── api.ts       # cliente HTTP
-            └── store.ts     # estado do usuário (Zustand)
+            ├── api.ts           # cliente HTTP
+            └── store.ts         # estado do usuário (Zustand)
 ```
 
 ---
@@ -172,4 +165,4 @@ anima/
 | Embeddings | `sentence-transformers` local (sem API key) |
 | Frontend | Next.js 14 + TypeScript + Tailwind |
 
-Sem Docker, sem serviços externos. Tudo roda com `pip install` + `npm install`.
+Zero API keys. Zero Docker. Zero serviços externos.
