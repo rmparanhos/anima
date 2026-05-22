@@ -49,16 +49,19 @@ ${c(93, "Uso:")}
 switch (command) {
   case "start": {
     const { default: start } = await import("./start.mjs")
+    await start()
     break
   }
 
   case "setup": {
     const { default: setup } = await import("./setup.mjs")
+    await setup()
     break
   }
 
   case "stop": {
     const { default: stop } = await import("./stop.mjs")
+    stop()
     break
   }
 
