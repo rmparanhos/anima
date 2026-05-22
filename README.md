@@ -26,31 +26,26 @@ Like Stack Overflow, but with AI as the main mediator. Anyone can ask and anyone
 
 ## Running locally
 
-**Requirements:** Python 3.11+ and Node 18+. Everything else is installed automatically.
+**Requirements:** Python 3.11+ and Node 18+.
 
 ```bash
 git clone https://github.com/rmparanhos/anima
 cd anima
-python start.py
+
+# install the anima command (one time)
+pipx install ./api
+
+# start everything
+anima start
 ```
 
-After the first setup, the `anima` command becomes available directly in your terminal:
+> Don't have pipx? Install it with `brew install pipx` (macOS) or `pip install pipx`.
 
-```bash
-anima start      # validates everything and starts the project
-anima setup      # validates and configures without starting
-anima stop       # stops api and web
-anima api        # api only
-anima web        # web only
-anima model                  # lists available models
-anima model qwen2.5:7b       # switches the Ollama model
-```
-
-The script handles everything on first run:
+`anima start` handles everything automatically:
 1. Checks Python and Node.js
 2. Installs Ollama if not present (Mac, Linux, Windows)
 3. Detects your RAM and downloads the right model automatically
-4. Installs Python and Node.js dependencies
+4. Installs Node.js dependencies
 5. Creates `.env` files from the examples
 6. Runs database migrations
 7. Starts api + web
@@ -61,16 +56,29 @@ The script handles everything on first run:
 ✓ Ollama installed
   RAM detected: 16GB → model: qwen2.5:7b
 ✓ Model qwen2.5:7b available
-✓ Python dependencies OK
 ✓ Database OK
 ✓ Node.js dependencies OK
 
-API  → http://localhost:8000
-Swagger  → http://localhost:8000/docs
-Web  → http://localhost:3000
+API     → http://localhost:8000
+Swagger → http://localhost:8000/docs
+Web     → http://localhost:3000
 
 Press Ctrl+C to stop everything.
 ```
+
+### Available commands
+
+```bash
+anima start                  # validates everything and starts the project
+anima setup                  # validates and configures without starting
+anima stop                   # stops api and web
+anima api                    # api only
+anima web                    # web only
+anima model                  # lists available Ollama models
+anima model qwen2.5:7b       # switches the model
+```
+
+> **No pipx?** Fallback: `python start.py` works without any prior installation.
 
 ---
 
