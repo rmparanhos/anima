@@ -58,21 +58,39 @@ npm run dev
 
 ---
 
+## Pré-requisito: Ollama
+
+O Anima roda **100% local**, sem nenhuma API key.
+
+```bash
+# 1. instala o Ollama (apenas uma vez)
+curl -fsSL https://ollama.com/install.sh | sh   # Linux/Mac
+
+# 2. baixa o modelo (escolha conforme sua RAM)
+ollama pull llama3.1:8b   # 16GB RAM → melhor qualidade (~5GB download)
+ollama pull phi3:mini      # 8GB RAM  → mais leve (~2GB download)
+ollama pull llama3.2:3b   # 8GB RAM  → alternativa ao phi3
+
+# 3. Ollama fica rodando em http://localhost:11434
+```
+
 ## Variáveis de ambiente
 
 ```bash
-# backend/.env
-ANTHROPIC_API_KEY=sk-ant-...        # única API key necessária (Claude)
+# backend/.env  (copie de .env.example)
 DATABASE_URL=sqlite+aiosqlite:///./anima.db
 CHROMA_PATH=./chroma_db
 
+OLLAMA_BASE_URL=http://localhost:11434/v1
+OLLAMA_MODEL=llama3.1:8b   # troque por phi3:mini se tiver 8GB de RAM
+
 # ajustes opcionais
-RAG_CONFIDENCE_THRESHOLD=0.72       # abaixo disso → "não sei"
-RAG_TOP_K=5                         # chunks recuperados por busca
-QUESTION_DEDUP_THRESHOLD=0.90       # similaridade para agrupar duplicatas
+RAG_CONFIDENCE_THRESHOLD=0.72
+RAG_TOP_K=5
+QUESTION_DEDUP_THRESHOLD=0.90
 ```
 
-> Embeddings rodam **localmente** via `sentence-transformers` (modelo `all-MiniLM-L6-v2`, ~90MB, baixado automaticamente na primeira execução). Sem OpenAI, sem custo adicional.
+> Embeddings também rodam **localmente** via `sentence-transformers` (`all-MiniLM-L6-v2`, ~90MB, baixado automaticamente). **Nenhuma API key necessária em nenhuma etapa.**
 
 ```bash
 # frontend/.env.local
@@ -103,8 +121,8 @@ Adicione ao seu `~/.claude/claude_desktop_config.json` ou `.mcp.json`:
       "args": ["-m", "app.mcp_server"],
       "cwd": "/caminho/para/anima/backend",
       "env": {
-        "ANTHROPIC_API_KEY": "sk-ant-...",
-        "OPENAI_API_KEY": "sk-..."
+        "OLLAMA_BASE_URL": "http://localhost:11434/v1",
+        "OLLAMA_MODEL": "llama3.1:8b"
       }
     }
   }
@@ -150,7 +168,7 @@ anima/
 |--------|------------|
 | Backend | Python 3.11 + FastAPI |
 | Banco | SQLite (relacional) + ChromaDB (vetores) |
-| LLM | Claude via API Anthropic |
+| LLM | Ollama local (llama3.1, phi3, mistral…) |
 | Embeddings | `sentence-transformers` local (sem API key) |
 | Frontend | Next.js 14 + TypeScript + Tailwind |
 
