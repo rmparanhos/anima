@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional, List
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
@@ -13,14 +14,14 @@ class ChunkOut(BaseModel):
     id: str
     content: str
     source_type: str
-    source_id: str | None
+    source_id: Optional[str]
     created_at: datetime
 
     model_config = {"from_attributes": True}
 
 
 class KnowledgeResponse(BaseModel):
-    chunks: list[ChunkOut]
+    chunks: List[ChunkOut]
     total: int
 
 

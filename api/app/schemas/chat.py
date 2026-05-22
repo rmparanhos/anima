@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -6,16 +7,16 @@ from datetime import datetime
 class ChatMessageRequest(BaseModel):
     content: str
     user_id: str
-    conversation_id: str | None = None
+    conversation_id: Optional[str] = None
 
 
 class ChatMessageResponse(BaseModel):
     message_id: str
     conversation_id: str
     content: str
-    confidence_score: float | None = None
+    confidence_score: Optional[float] = None
     status: str  # answered | pending
-    question_id: str | None = None
+    question_id: Optional[str] = None
 
 
 class MessageOut(BaseModel):
@@ -23,11 +24,11 @@ class MessageOut(BaseModel):
     role: str
     content: str
     created_at: datetime
-    confidence_score: float | None = None
+    confidence_score: Optional[float] = None
 
     model_config = {"from_attributes": True}
 
 
 class ConversationHistory(BaseModel):
     conversation_id: str
-    messages: list[MessageOut]
+    messages: List[MessageOut]

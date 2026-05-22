@@ -1,6 +1,7 @@
 from __future__ import annotations
 import json
 from datetime import datetime, timezone
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models.conversation import Conversation
@@ -17,7 +18,7 @@ from app.services.question_service import create_pending_question
 async def process_message(
     content: str,
     user_id: str,
-    conversation_id: str | None,
+    conversation_id: Optional[str],
     db: AsyncSession,
 ) -> dict:
     if conversation_id:

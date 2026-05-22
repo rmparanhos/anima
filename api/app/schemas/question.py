@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional, List
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -9,8 +10,8 @@ class QuestionOut(BaseModel):
     status: str
     votes: int
     created_at: datetime
-    answer_text: str | None = None
-    answered_at: datetime | None = None
+    answer_text: Optional[str] = None
+    answered_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 
@@ -26,5 +27,5 @@ class AnswerResponse(BaseModel):
 
 
 class PendingQuestionsResponse(BaseModel):
-    questions: list[QuestionOut]
+    questions: List[QuestionOut]
     total: int
