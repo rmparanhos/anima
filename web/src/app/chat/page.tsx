@@ -21,12 +21,10 @@ export default function ChatPage() {
     if (!handle.trim()) return
     setSigningIn(true)
     try {
-      const user = await api.createUser(handle.trim()).catch(async () => {
-        throw new Error("Handle already in use. Try another one.")
-      })
+      const user = await api.createUser(handle.trim())
       setUser(user.id, user.handle)
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Error creating user")
+      alert(err instanceof Error ? err.message : "Error signing in")
     } finally {
       setSigningIn(false)
     }

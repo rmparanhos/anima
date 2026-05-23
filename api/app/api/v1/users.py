@@ -9,16 +9,15 @@ from app.schemas.user import UserCreate, UserOut
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.post("", response_model=UserOut, status_code=201)
+@router.post("", response_model=UserOut, status_code=200)
 async def create_user(body: UserCreate, db: AsyncSession = Depends(get_db)):
-    existing = await db.execute(select(User).where(User.handle == body.handle))
-    if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Handle already taken")
-
-    user = User(handle=body.handle)
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
+    result = await db.execute(select(User).where(User.handle == body.handle))
+    user = result.scalar_one_or_none()
+    if not user:
+        user = User(handle=body.handle)
+        db.add(user)
+        await db.commit()
+        await db.refresh(user)
     return user
 
 
