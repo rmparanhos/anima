@@ -114,15 +114,9 @@ export function pullModel(model) {
 
 // ─── 7. Python dependencies ──────────────────────────────────────────────────
 export function installPythonDeps(py) {
-  info("Checking Python dependencies...")
-  try {
-    execSync(`${py} -m pip show fastapi alembic chromadb sentence-transformers`, { stdio: "pipe" })
-    ok("Python dependencies OK")
-  } catch {
-    warn("Installing Python dependencies...")
-    run(`${py} -m pip install "${API}" --upgrade -q`)
-    ok("Python dependencies installed")
-  }
+  info("Installing Python dependencies...")
+  run(`${py} -m pip install "${API}" --upgrade -q`)
+  ok("Python dependencies OK")
 }
 
 // ─── 8. .env ─────────────────────────────────────────────────────────────────
