@@ -34,14 +34,14 @@ const has = (bin) => {
 export function checkPython() {
   info("Checking Python...")
   if (!has("python3") && !has("python"))
-    fail("Python 3.9+ not found. Install it at https://python.org")
+    fail("Python 3.12+ not found. Install it at https://python.org")
 
   const py = has("python3") ? "python3" : "python"
   const ver = execSync(`${py} --version`, { encoding: "utf8" }).trim()
   const [, major, minor] = ver.match(/(\d+)\.(\d+)/) ?? []
 
-  if (Number(major) < 3 || (Number(major) === 3 && Number(minor) < 9))
-    fail(`Python 3.9+ required (found: ${ver})`)
+  if (Number(major) < 3 || (Number(major) === 3 && Number(minor) < 12))
+    fail(`Python 3.12+ required (found: ${ver})`)
 
   ok(ver)
   return py

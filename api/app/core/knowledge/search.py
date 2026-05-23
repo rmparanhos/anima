@@ -1,10 +1,8 @@
-from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, List
 import chromadb
 from app.config import settings
 
-_client: Optional[chromadb.ClientAPI] = None
+_client: chromadb.ClientAPI | None = None
 COLLECTION_NAME = "knowledge"
 
 
@@ -28,7 +26,7 @@ class ChunkWithScore:
     metadata: dict
 
 
-async def semantic_search(query_embedding: List[float], limit: Optional[int] = None) -> List[ChunkWithScore]:
+async def semantic_search(query_embedding: list[float], limit: int | None = None) -> list[ChunkWithScore]:
     k = limit or settings.rag_top_k
     collection = get_collection()
 
