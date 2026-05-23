@@ -1,4 +1,3 @@
-from __future__ import annotations
 from collections.abc import AsyncGenerator
 from openai import AsyncOpenAI
 from app.config import settings

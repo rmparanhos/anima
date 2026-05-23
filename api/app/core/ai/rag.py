@@ -1,4 +1,3 @@
-from __future__ import annotations
 from app.core.knowledge.search import ChunkWithScore
 from app.core.ai.confidence import INSUFFICIENT_MARKER
 

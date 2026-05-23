@@ -1,17 +1,31 @@
-from __future__ import annotations
 import uuid
 import json
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 from app.models.knowledge_chunk import KnowledgeChunk
 from app.models.question import Question
 from app.core.ai.embedder import embedder
+from app.core.ai.claude import complete
 from app.core.knowledge.search import add_chunk, remove_pending_question
 
 
 async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
-    content = f"Pergunta: {question.normalized_text}\nResposta: {question.answer_text}"
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a technical writer. Given a question and its answer, write clear, "
+                "concise documentation in plain English. Write in the third person, present tense. "
+                "No bullet points — write flowing prose. 2-4 sentences max."
+            ),
+        },
+        {
+            "role": "user",
+            "content": f"Question: {question.normalized_text}\n\nAnswer: {question.answer_text}",
+        },
+    ]
+    content = await complete(messages)
+
     embedding = await embedder.embed(content)
 
     chunk_id = str(uuid.uuid4())

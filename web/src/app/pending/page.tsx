@@ -32,56 +32,131 @@ export default function PendingPage() {
 
   if (!userId) {
     return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <p className="text-zinc-400 text-sm">Sign in at <a href="/chat" className="underline">chat</a> first.</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 48px)" }}>
+        <p style={{ color: "#8888aa", fontSize: "14px" }}>
+          Sign in at <a href="/chat" style={{ color: "#5b5bd6", textDecoration: "underline" }}>chat</a> first.
+        </p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
-      <h1 className="text-xl font-bold mb-6">Pending Questions</h1>
+    <div style={{ maxWidth: "768px", margin: "0 auto", padding: "32px 16px" }}>
+      <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#e2e2e9", marginBottom: "24px" }}>Pending Questions</h1>
 
-      {isLoading && <p className="text-zinc-500 text-sm">Loading...</p>}
-      {data?.questions.length === 0 && <p className="text-zinc-500 text-sm">No pending questions.</p>}
+      {isLoading && <p style={{ color: "#555570", fontSize: "14px" }}>Loading...</p>}
+      {!isLoading && data?.questions.length === 0 && (
+        <p style={{ color: "#555570", fontSize: "14px" }}>No pending questions.</p>
+      )}
 
-      <div className="space-y-4">
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {data?.questions.map((q: Question) => (
-          <div key={q.id} className="border border-zinc-800 rounded-lg p-4 space-y-3">
-            <div className="flex justify-between items-start gap-4">
-              <p className="text-sm text-zinc-100">{q.normalized_text}</p>
+          <div
+            key={q.id}
+            style={{
+              background: "#16161f",
+              border: "1px solid #2a2a3a",
+              borderRadius: "8px",
+              padding: "20px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", marginBottom: "12px" }}>
+              <p style={{ fontSize: "14px", color: "#e2e2e9", margin: 0, lineHeight: 1.6 }}>{q.normalized_text}</p>
               <button
                 onClick={() => voteMutation.mutate(q.id)}
-                className="text-xs text-zinc-500 hover:text-white border border-zinc-700 rounded px-2 py-1 shrink-0"
+                style={{
+                  background: "#1e1e2e",
+                  border: "1px solid #2a2a3a",
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  fontSize: "12px",
+                  color: "#8888aa",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  transition: "border-color 0.15s, color 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#e2e2e9"
+                  e.currentTarget.style.borderColor = "#5b5bd6"
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#8888aa"
+                  e.currentTarget.style.borderColor = "#2a2a3a"
+                }}
               >
                 +{q.votes}
               </button>
             </div>
 
             {answering === q.id ? (
-              <div className="space-y-2">
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <textarea
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-zinc-500 resize-none"
+                  style={{
+                    width: "100%",
+                    background: "#1e1e2e",
+                    border: "1px solid #2a2a3a",
+                    borderRadius: "6px",
+                    padding: "8px 12px",
+                    fontSize: "14px",
+                    color: "#e2e2e9",
+                    outline: "none",
+                    resize: "none",
+                    lineHeight: 1.6,
+                  }}
                   rows={4}
                   placeholder="Write your answer..."
                   value={answerText}
                   onChange={(e) => setAnswerText(e.target.value)}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = "#5b5bd6" }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = "#2a2a3a" }}
                 />
-                <div className="flex gap-2">
+                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                   <button
                     onClick={() => answerMutation.mutate({ id: q.id, text: answerText })}
                     disabled={!answerText.trim() || answerMutation.isPending}
-                    className="bg-white text-black rounded px-3 py-1.5 text-sm font-semibold hover:bg-zinc-200 disabled:opacity-50"
+                    style={{
+                      background: "#5b5bd6",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "6px",
+                      padding: "7px 14px",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      cursor: !answerText.trim() || answerMutation.isPending ? "not-allowed" : "pointer",
+                      opacity: !answerText.trim() || answerMutation.isPending ? 0.5 : 1,
+                    }}
                   >
-                    {answerMutation.isPending ? "Submitting..." : "Answer"}
+                    {answerMutation.isPending ? "Submitting..." : "Submit"}
                   </button>
-                  <button onClick={() => setAnswering(null)} className="text-sm text-zinc-500 hover:text-white">Cancel</button>
+                  <button
+                    onClick={() => setAnswering(null)}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      fontSize: "14px",
+                      color: "#8888aa",
+                      cursor: "pointer",
+                      padding: "7px 10px",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "#e2e2e9" }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "#8888aa" }}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             ) : (
               <button
                 onClick={() => setAnswering(q.id)}
-                className="text-xs text-zinc-400 hover:text-white underline"
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: "13px",
+                  color: "#5b5bd6",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
               >
                 answer
               </button>

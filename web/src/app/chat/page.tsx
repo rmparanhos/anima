@@ -4,7 +4,7 @@ import { api, type Message } from "@/lib/api"
 import { useUserStore } from "@/lib/store"
 
 export default function ChatPage() {
-  const { userId, userHandle, conversationId, setUser, setConversationId } = useUserStore()
+  const { userId, conversationId, setUser, setConversationId } = useUserStore()
   const [messages, setMessages] = useState<(Message & { status?: string; question_id?: string })[]>([])
   const [input, setInput] = useState("")
   const [loading, setLoading] = useState(false)
@@ -54,7 +54,7 @@ export default function ChatPage() {
         question_id: res.question_id,
       }
       setMessages((prev) => [...prev, assistantMsg])
-    } catch (err: unknown) {
+    } catch {
       setMessages((prev) => [...prev, { id: "err", role: "assistant", content: "Error processing message.", created_at: new Date().toISOString() }])
     } finally {
       setLoading(false)
@@ -63,16 +63,51 @@ export default function ChatPage() {
 
   if (!userId) {
     return (
-      <div className="flex items-center justify-center h-[80vh]">
-        <form onSubmit={handleSignIn} className="flex flex-col gap-4 w-72">
-          <h1 className="text-xl font-bold">Sign in to Anima</h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "calc(100vh - 48px)" }}>
+        <form
+          onSubmit={handleSignIn}
+          style={{
+            background: "#16161f",
+            border: "1px solid #2a2a3a",
+            borderRadius: "12px",
+            padding: "32px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            width: "320px",
+          }}
+        >
+          <h1 style={{ fontSize: "18px", fontWeight: 700, color: "#e2e2e9", margin: 0 }}>Sign in to Anima</h1>
           <input
-            className="bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-zinc-500"
+            style={{
+              background: "#1e1e2e",
+              border: "1px solid #2a2a3a",
+              borderRadius: "6px",
+              padding: "8px 12px",
+              fontSize: "14px",
+              color: "#e2e2e9",
+              outline: "none",
+            }}
             placeholder="Choose a handle (e.g. john)"
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
+            onFocus={(e) => { e.currentTarget.style.borderColor = "#5b5bd6" }}
+            onBlur={(e) => { e.currentTarget.style.borderColor = "#2a2a3a" }}
           />
-          <button className="bg-white text-black rounded px-4 py-2 text-sm font-semibold hover:bg-zinc-200" disabled={signingIn}>
+          <button
+            style={{
+              background: "#5b5bd6",
+              color: "#fff",
+              border: "none",
+              borderRadius: "6px",
+              padding: "9px 16px",
+              fontSize: "14px",
+              fontWeight: 600,
+              cursor: signingIn ? "not-allowed" : "pointer",
+              opacity: signingIn ? 0.7 : 1,
+            }}
+            disabled={signingIn}
+          >
             {signingIn ? "Signing in..." : "Sign in"}
           </button>
         </form>
@@ -81,47 +116,105 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-49px)]">
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4 max-w-3xl mx-auto w-full">
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 48px)" }}>
+      {/* Messages */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "24px 16px", maxWidth: "768px", margin: "0 auto", width: "100%" }}>
         {messages.length === 0 && (
-          <p className="text-zinc-500 text-sm text-center mt-20">Ask a question to get started.</p>
+          <p style={{ color: "#555570", fontSize: "14px", textAlign: "center", marginTop: "80px" }}>
+            Ask a question to get started.
+          </p>
         )}
-        {messages.map((m) => (
-          <div key={m.id} className={`flex flex-col gap-1 ${m.role === "user" ? "items-end" : "items-start"}`}>
-            <div
-              className={`px-4 py-2 rounded-lg text-sm max-w-[80%] whitespace-pre-wrap ${
-                m.role === "user" ? "bg-zinc-700 text-white" : "bg-zinc-800 text-zinc-100"
-              }`}
-            >
-              {m.content}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {messages.map((m) => (
+            <div key={m.id} style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: m.role === "user" ? "flex-end" : "flex-start" }}>
+              <div
+                style={{
+                  padding: "10px 16px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  maxWidth: "80%",
+                  whiteSpace: "pre-wrap",
+                  lineHeight: 1.6,
+                  ...(m.role === "user"
+                    ? { background: "#1e1e2e", color: "#e2e2e9", borderLeft: "3px solid #5b5bd6" }
+                    : { background: "#16161f", color: "#e2e2e9", border: "1px solid #2a2a3a" }),
+                }}
+              >
+                {m.content}
+              </div>
+              {m.role === "assistant" && m.status === "pending" && m.question_id && (
+                <a href="/pending" style={{ fontSize: "12px", color: "#e8c468", textDecoration: "underline" }}>
+                  view pending question
+                </a>
+              )}
+              {m.role === "assistant" && m.confidence_score != null && m.status === "answered" && (
+                <span style={{ fontSize: "12px", background: "#2a2a3a", color: "#8888aa", padding: "2px 8px", borderRadius: "999px" }}>
+                  confidence: {(m.confidence_score * 100).toFixed(0)}%
+                </span>
+              )}
             </div>
-            {m.role === "assistant" && m.status === "pending" && m.question_id && (
-              <a href="/pending" className="text-xs text-yellow-500 hover:underline">
-                view pending question
-              </a>
-            )}
-            {m.role === "assistant" && m.confidence_score != null && m.status === "answered" && (
-              <span className="text-xs text-zinc-600">confidence: {(m.confidence_score * 100).toFixed(0)}%</span>
-            )}
-          </div>
-        ))}
-        {loading && (
-          <div className="flex items-start">
-            <div className="px-4 py-2 rounded-lg text-sm bg-zinc-800 text-zinc-400 animate-pulse">thinking...</div>
-          </div>
-        )}
-        <div ref={bottomRef} />
+          ))}
+
+          {loading && (
+            <div style={{ display: "flex", alignItems: "flex-start" }}>
+              <div style={{ padding: "10px 16px", borderRadius: "8px", fontSize: "14px", background: "#16161f", border: "1px solid #2a2a3a", color: "#5b5bd6" }}>
+                thinking...
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
       </div>
 
-      <form onSubmit={handleSend} className="border-t border-zinc-800 px-4 py-3 flex gap-2 max-w-3xl mx-auto w-full">
+      {/* Input */}
+      <form
+        onSubmit={handleSend}
+        style={{
+          borderTop: "1px solid #2a2a3a",
+          background: "#16161f",
+          padding: "12px 16px",
+          display: "flex",
+          gap: "8px",
+          maxWidth: "768px",
+          margin: "0 auto",
+          width: "100%",
+        }}
+      >
         <input
-          className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-zinc-500"
+          style={{
+            flex: 1,
+            background: "#1e1e2e",
+            border: "1px solid #2a2a3a",
+            borderRadius: "6px",
+            padding: "8px 12px",
+            fontSize: "14px",
+            color: "#e2e2e9",
+            outline: "none",
+          }}
           placeholder="Ask a question..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "#5b5bd6" }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "#2a2a3a" }}
         />
-        <button className="bg-white text-black rounded px-4 py-2 text-sm font-semibold hover:bg-zinc-200 disabled:opacity-50" disabled={loading || !input.trim()}>
+        <button
+          style={{
+            background: "#5b5bd6",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            padding: "8px 18px",
+            fontSize: "14px",
+            fontWeight: 600,
+            cursor: loading || !input.trim() ? "not-allowed" : "pointer",
+            opacity: loading || !input.trim() ? 0.5 : 1,
+          }}
+          disabled={loading || !input.trim()}
+          onMouseEnter={(e) => { if (!loading && input.trim()) e.currentTarget.style.background = "#6e6edf" }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "#5b5bd6" }}
+        >
           Send
         </button>
       </form>

@@ -17,34 +17,67 @@ export default function DocsPage() {
   ) ?? []
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold">Knowledge Base</h1>
-        {data && <span className="text-xs text-zinc-500">{data.total} entries</span>}
+    <div style={{ maxWidth: "896px", margin: "0 auto", padding: "32px 16px" }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+        <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#e2e2e9", margin: 0 }}>Knowledge Base</h1>
+        {data && (
+          <span style={{ background: "#1e1e2e", color: "#8888aa", fontSize: "12px", padding: "3px 10px", borderRadius: "999px" }}>
+            {data.total} entries
+          </span>
+        )}
       </div>
 
+      {/* Search */}
       <input
-        className="w-full bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-sm mb-6 focus:outline-none focus:border-zinc-500"
+        style={{
+          width: "100%",
+          background: "#1e1e2e",
+          border: "1px solid #2a2a3a",
+          borderRadius: "6px",
+          padding: "8px 12px",
+          fontSize: "14px",
+          color: "#e2e2e9",
+          outline: "none",
+          marginBottom: "24px",
+        }}
         placeholder="Search the knowledge base..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        onFocus={(e) => { e.currentTarget.style.borderColor = "#5b5bd6" }}
+        onBlur={(e) => { e.currentTarget.style.borderColor = "#2a2a3a" }}
       />
 
-      {isLoading && <p className="text-zinc-500 text-sm">Loading...</p>}
-      {filtered.length === 0 && !isLoading && (
-        <p className="text-zinc-500 text-sm">
+      {isLoading && <p style={{ color: "#555570", fontSize: "14px" }}>Loading...</p>}
+      {!isLoading && filtered.length === 0 && (
+        <p style={{ color: "#555570", fontSize: "14px" }}>
           {search ? "No results for that search." : "The knowledge base is empty. Answer pending questions to populate it."}
         </p>
       )}
 
-      <div className="space-y-4">
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
         {filtered.map((chunk: KnowledgeChunk) => (
-          <div key={chunk.id} className="border border-zinc-800 rounded-lg p-4 space-y-2">
-            <pre className="text-sm text-zinc-100 whitespace-pre-wrap font-mono leading-relaxed">{chunk.content}</pre>
-            <div className="flex gap-4 text-xs text-zinc-600">
+          <div
+            key={chunk.id}
+            style={{
+              background: "#16161f",
+              border: "1px solid #2a2a3a",
+              borderRadius: "8px",
+              padding: "20px",
+            }}
+          >
+            <p style={{ fontSize: "14px", color: "#e2e2e9", lineHeight: 1.7, margin: "0 0 12px 0" }}>
+              {chunk.content}
+            </p>
+            <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#555570" }}>
               <span>{new Date(chunk.created_at).toLocaleDateString("en-US")}</span>
               {chunk.source_id && (
-                <a href={`/pending`} className="hover:text-zinc-400">
+                <a
+                  href="/pending"
+                  style={{ color: "#555570", textDecoration: "none" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "#8888aa" }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "#555570" }}
+                >
                   source: pending question
                 </a>
               )}
@@ -54,10 +87,40 @@ export default function DocsPage() {
       </div>
 
       {data && data.total > 50 && (
-        <div className="flex gap-4 mt-8 justify-center">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="text-sm text-zinc-400 hover:text-white disabled:opacity-30">previous</button>
-          <span className="text-sm text-zinc-500">page {page}</span>
-          <button onClick={() => setPage((p) => p + 1)} disabled={page * 50 >= data.total} className="text-sm text-zinc-400 hover:text-white disabled:opacity-30">next</button>
+        <div style={{ display: "flex", gap: "16px", marginTop: "32px", justifyContent: "center", alignItems: "center" }}>
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            style={{
+              background: "transparent",
+              border: "none",
+              fontSize: "14px",
+              color: page === 1 ? "#333345" : "#8888aa",
+              cursor: page === 1 ? "not-allowed" : "pointer",
+              padding: "4px 8px",
+            }}
+            onMouseEnter={(e) => { if (page !== 1) e.currentTarget.style.color = "#e2e2e9" }}
+            onMouseLeave={(e) => { if (page !== 1) e.currentTarget.style.color = "#8888aa" }}
+          >
+            previous
+          </button>
+          <span style={{ fontSize: "14px", color: "#555570" }}>page {page}</span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={page * 50 >= data.total}
+            style={{
+              background: "transparent",
+              border: "none",
+              fontSize: "14px",
+              color: page * 50 >= data.total ? "#333345" : "#8888aa",
+              cursor: page * 50 >= data.total ? "not-allowed" : "pointer",
+              padding: "4px 8px",
+            }}
+            onMouseEnter={(e) => { if (page * 50 < data.total) e.currentTarget.style.color = "#e2e2e9" }}
+            onMouseLeave={(e) => { if (page * 50 < data.total) e.currentTarget.style.color = "#8888aa" }}
+          >
+            next
+          </button>
         </div>
       )}
     </div>
