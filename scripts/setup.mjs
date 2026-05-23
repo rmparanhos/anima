@@ -120,7 +120,7 @@ export function installPythonDeps(py) {
     ok("Python dependencies OK")
   } catch {
     warn("Installing Python dependencies...")
-    run(`${py} -m pip install "${API}" -q`)
+    run(`${py} -m pip install "${API}" --upgrade -q`)
     ok("Python dependencies installed")
   }
 }
