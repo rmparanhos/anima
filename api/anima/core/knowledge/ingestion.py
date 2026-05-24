@@ -10,7 +10,8 @@ from anima.core.knowledge.search import add_chunk_async, remove_pending_question
 
 
 async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
-    messages = [
+    # Step 1 — generate narrative prose from the Q&A pair
+    content = await complete([
         {
             "role": "system",
             "content": (
@@ -23,13 +24,30 @@ async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
             "role": "user",
             "content": f"Question: {question.normalized_text}\n\nAnswer: {question.answer_text}",
         },
-    ]
-    content = await complete(messages)
+    ])
+
+    # Step 2 — generate a short section title for the docs page
+    raw_title = await complete([
+        {
+            "role": "system",
+            "content": (
+                "Generate a concise documentation section title (4-7 words) for the text below. "
+                "The title should read like a chapter heading in a technical manual — descriptive and specific. "
+                "Return ONLY the title, no quotes, no punctuation at the end."
+            ),
+        },
+        {"role": "user", "content": content},
+    ])
+    title = raw_title.strip().strip('"').strip("'")
 
     embedding = await embedder.embed(content)
 
     chunk_id = str(uuid.uuid4())
-    metadata = {"source_type": "qa_answer", "question_id": question.id}
+    metadata = {
+        "source_type": "qa_answer",
+        "question_id": question.id,
+        "title": title,
+    }
 
     await add_chunk_async(chunk_id, content, embedding, metadata)
     await remove_pending_question_async(question.id)
