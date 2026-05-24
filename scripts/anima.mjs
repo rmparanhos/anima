@@ -53,6 +53,7 @@ ${c(93, "Usage:")}
   anima web                start web only (Next.js)
   anima model              list available Ollama models
   anima model <name>       switch model (e.g. qwen2.5:7b)
+  anima reset              wipe all knowledge chunks and questions
 `)
   process.exit(0)
 }
@@ -104,6 +105,13 @@ switch (command) {
       info("Pulling if needed...")
       execSync(`ollama pull ${name}`, { stdio: "inherit" })
     }
+    break
+  }
+
+  case "reset": {
+    const py = resolvePythonPath()
+    const resetScript = join(API, "reset_knowledge.py")
+    spawn(py, [resetScript], { cwd: API, stdio: "inherit" })
     break
   }
 
