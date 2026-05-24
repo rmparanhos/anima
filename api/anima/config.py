@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,7 +14,11 @@ class Settings(BaseSettings):
 
     # Language for all AI-generated content (docs titles, topics, answers).
     # Set ANIMA_LANGUAGE in .env — e.g. "Portuguese", "English", "Spanish"
-    language: str = "English"
+    # AliasChoices accepts both ANIMA_LANGUAGE (preferred) and LANGUAGE (fallback)
+    language: str = Field(
+        default="English",
+        validation_alias=AliasChoices("ANIMA_LANGUAGE", "LANGUAGE"),
+    )
 
     # RAG — threshold lowered from 0.72; all-MiniLM-L6-v2 cosine similarity
     # for semantically related sentences typically falls between 0.50–0.70,
