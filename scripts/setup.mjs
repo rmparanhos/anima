@@ -170,14 +170,15 @@ export function installPythonDeps(py) {
 }
 
 // ─── 8. .env ─────────────────────────────────────────────────────────────────
-export function setupEnv(model) {
+export function setupEnv(model, language) {
   const envPath = join(API, ".env")
   if (!existsSync(envPath)) {
     warn(".env not found. Creating...")
     let content = readFileSync(join(API, ".env.example"), "utf8")
     content = content.replace(/^OLLAMA_MODEL=.*/m, `OLLAMA_MODEL=${model}`)
+    if (language) content = content.replace(/^ANIMA_LANGUAGE=.*/m, `ANIMA_LANGUAGE=${language}`)
     writeFileSync(envPath, content)
-    ok(`.env created with OLLAMA_MODEL=${model}`)
+    ok(`.env created (model=${model}, language=${language ?? "Portuguese"})`)
   } else {
     ok(".env found")
   }
@@ -218,7 +219,7 @@ export default async function setup() {
   await startOllama()
   await pullModel(model)
   const py = installPythonDeps(basePy)
-  setupEnv(model)
+  setupEnv(model, process.env.ANIMA_LANGUAGE)
   runMigrations(py)
   installNodeDeps()
 

@@ -9,10 +9,35 @@ from anima.core.ai.embedder import embedder
 from anima.core.knowledge.search import semantic_search
 from anima.core.ai.rag import build_messages
 from anima.core.ai.claude import complete
-from anima.core.ai.confidence import evaluate, INSUFFICIENT_MARKER
+from anima.core.ai.confidence import evaluate
 from anima.services.question_service import create_pending_question
+from anima.config import settings
 
 logger = logging.getLogger(__name__)
+
+_NOT_FOUND: dict[str, str] = {
+    "portuguese": (
+        "Não encontrei essa informação na base de conhecimento. "
+        "Sua pergunta foi registrada — qualquer pessoa pode respondê-la em /pending."
+    ),
+    "english": (
+        "I couldn't find this information in the knowledge base. "
+        "Your question has been registered — anyone can answer it at /pending."
+    ),
+    "spanish": (
+        "No encontré esta información en la base de conocimiento. "
+        "Tu pregunta fue registrada — cualquiera puede responderla en /pending."
+    ),
+}
+
+
+def _not_found_msg() -> str:
+    key = settings.language.lower()
+    # Fuzzy match: "Portuguese" → "portuguese", "pt-BR" → "portuguese" (first word)
+    for lang in _NOT_FOUND:
+        if lang in key:
+            return _NOT_FOUND[lang]
+    return _NOT_FOUND["english"]
 
 
 async def process_message(
@@ -37,26 +62,27 @@ async def process_message(
     query_embedding = await embedder.embed(content)
     chunks = await semantic_search(query_embedding)
 
-    history = await _load_history(conv.id, db)
-    messages = build_messages(content, chunks, history)
-
-    # Call the LLM; on failure treat it as no context so the question is queued.
-    try:
-        response_text = await complete(messages)
-    except Exception as exc:
-        logger.error("LLM call failed: %s", exc)
-        response_text = INSUFFICIENT_MARKER
-
-    confidence = evaluate(chunks, response_text)
+    # Check vector confidence BEFORE calling the LLM.
+    # If no good chunks exist, skip the LLM call entirely and queue the question.
+    confidence = evaluate(chunks)
 
     question_id = None
-    final_content = response_text
+    final_content: str
 
-    if not confidence.is_confident:
-        final_content = (
-            "I couldn't find this information in the knowledge base. "
-            "Your question has been registered — anyone can answer it at /pending."
-        )
+    if confidence.is_confident:
+        history = await _load_history(conv.id, db)
+        messages = build_messages(content, chunks, history)
+        try:
+            final_content = await complete(messages)
+        except Exception as exc:
+            logger.error("LLM call failed: %s", exc)
+            # Treat LLM failure the same as no knowledge
+            confidence.is_confident = False
+            final_content = _not_found_msg()
+            question = await create_pending_question(content, user_id, user_msg.id, query_embedding, db)
+            question_id = question.id
+    else:
+        final_content = _not_found_msg()
         question = await create_pending_question(content, user_id, user_msg.id, query_embedding, db)
         question_id = question.id
 

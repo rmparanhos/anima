@@ -25,7 +25,7 @@ export default async function start() {
   await startOllama()
   await pullModel(model)
   const py = installPythonDeps(basePy)
-  setupEnv(model)
+  setupEnv(model, process.env.ANIMA_LANGUAGE)
   runMigrations(py)
   installNodeDeps()
 

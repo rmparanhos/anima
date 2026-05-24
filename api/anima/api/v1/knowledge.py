@@ -12,6 +12,7 @@ router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 class ChunkOut(BaseModel):
     id: str
     title: str
+    topic: str
     content: str
     source_type: str
     source_id: str | None
@@ -23,17 +24,22 @@ class KnowledgeResponse(BaseModel):
     total: int
 
 
-def _extract_title(chunk) -> str:
-    """Extract title from metadata_json; fall back to first words of content."""
+def _extract_meta(chunk) -> tuple[str, str]:
+    """Extract (title, topic) from metadata_json with graceful fallbacks."""
     try:
         meta = json.loads(chunk.metadata_json or "{}")
-        if meta.get("title"):
-            return meta["title"]
+        title = meta.get("title") or ""
+        topic = meta.get("topic") or ""
     except Exception:
-        pass
-    # Fallback: first 6 words of content (for chunks ingested before this change)
-    words = chunk.content.split()
-    return " ".join(words[:6]) + ("…" if len(words) > 6 else "")
+        title, topic = "", ""
+
+    if not title:
+        words = chunk.content.split()
+        title = " ".join(words[:6]) + ("…" if len(words) > 6 else "")
+    if not topic:
+        topic = "General"
+
+    return title, topic
 
 
 @router.get("", response_model=KnowledgeResponse)
@@ -47,7 +53,8 @@ async def list_knowledge(
         chunks=[
             ChunkOut(
                 id=c.id,
-                title=_extract_title(c),
+                title=_extract_meta(c)[0],
+                topic=_extract_meta(c)[1],
                 content=c.content,
                 source_type=c.source_type,
                 source_id=c.source_id,

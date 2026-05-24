@@ -7,15 +7,20 @@ class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./anima.db"
     chroma_path: str = "./chroma_db"
 
-    # Ollama — roda localmente, sem API key
-    # 16GB RAM → llama3.1:8b  |  8GB RAM → phi3:mini ou llama3.2:3b
+    # Ollama — runs locally, no API key needed
     ollama_base_url: str = "http://localhost:11434/v1"
     ollama_model: str = "qwen2.5:7b"
 
-    rag_confidence_threshold: float = 0.72
+    # Language for all AI-generated content (docs titles, topics, answers).
+    # Set ANIMA_LANGUAGE in .env — e.g. "Portuguese", "English", "Spanish"
+    language: str = "English"
+
+    # RAG — threshold lowered from 0.72; all-MiniLM-L6-v2 cosine similarity
+    # for semantically related sentences typically falls between 0.50–0.70,
+    # so 0.72 caused the system to always say it didn't know.
+    rag_confidence_threshold: float = 0.60
     rag_top_k: int = 5
     question_dedup_threshold: float = 0.90
-    # embeddings: sentence-transformers local (all-MiniLM-L6-v2, ~90MB)
 
 
 settings = Settings()

@@ -1,10 +1,14 @@
 from anima.core.knowledge.search import ChunkWithScore
-from anima.core.ai.confidence import INSUFFICIENT_MARKER
+from anima.config import settings
 
-SYSTEM_PROMPT = f"""You are Anima, a collective knowledge base assistant.
-Answer ONLY based on the context provided below.
-If the context is insufficient or missing, respond exactly: {INSUFFICIENT_MARKER}
-Be direct and precise. Do not make up information."""
+
+def _system_prompt() -> str:
+    return (
+        f"You are Anima, a collective knowledge base assistant. "
+        f"Always respond in {settings.language}. "
+        f"Answer based on the context provided. "
+        f"Be direct and precise. Do not make up information not present in the context."
+    )
 
 
 def build_messages(
@@ -18,7 +22,7 @@ def build_messages(
     if context_text:
         user_content = f"CONTEXT:\n{context_text}\n\nQUESTION: {query}"
 
-    messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages: list[dict] = [{"role": "system", "content": _system_prompt()}]
     messages.extend(history[-6:])  # last 3 turns
     messages.append({"role": "user", "content": user_content})
     return messages
