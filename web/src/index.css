@@ -1,17 +1,16 @@
-@import "tailwindcss";
-
-* {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
 body {
+  margin: 0;
   background: #111118;
   color: #e2e2e9;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
-.nav-link:hover {
-  color: #e2e2e9 !important;
-  background: #2a2a3a;
+#root {
+  min-height: 100vh;
 }

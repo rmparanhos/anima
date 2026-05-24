@@ -1,5 +1,5 @@
-"use client"
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 import { api, type KnowledgeChunk } from "@/lib/api"
 
@@ -18,7 +18,6 @@ export default function DocsPage() {
 
   return (
     <div style={{ maxWidth: "896px", margin: "0 auto", padding: "32px 16px" }}>
-      {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
         <h1 style={{ fontSize: "20px", fontWeight: 700, color: "#e2e2e9", margin: 0 }}>Knowledge Base</h1>
         {data && (
@@ -28,7 +27,6 @@ export default function DocsPage() {
         )}
       </div>
 
-      {/* Search */}
       <input
         style={{
           width: "100%",
@@ -72,14 +70,14 @@ export default function DocsPage() {
             <div style={{ display: "flex", gap: "16px", fontSize: "12px", color: "#555570" }}>
               <span>{new Date(chunk.created_at).toLocaleDateString("en-US")}</span>
               {chunk.source_id && (
-                <a
-                  href="/pending"
+                <Link
+                  to="/pending"
                   style={{ color: "#555570", textDecoration: "none" }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = "#8888aa" }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = "#555570" }}
                 >
                   source: pending question
-                </a>
+                </Link>
               )}
             </div>
           </div>

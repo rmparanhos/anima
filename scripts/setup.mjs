@@ -184,7 +184,7 @@ export function setupEnv(model) {
 
   const envLocal = join(WEB, ".env.local")
   if (!existsSync(envLocal)) {
-    writeFileSync(envLocal, "NEXT_PUBLIC_API_URL=http://localhost:8000\n")
+    writeFileSync(envLocal, "VITE_API_URL=http://localhost:8000\n")
     ok(".env.local created")
   }
 }
