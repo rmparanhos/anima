@@ -14,12 +14,12 @@ except ImportError:
     print("MCP package not installed. Run: pip install 'anima[mcp]'", file=sys.stderr)
     sys.exit(1)
 
-from app.config import settings
-from app.core.ai.embedder import embedder
-from app.core.knowledge.search import semantic_search
-from app.dependencies import AsyncSessionLocal
-from app.services.question_service import create_pending_question
-from app.models.user import User
+from anima.config import settings
+from anima.core.ai.embedder import embedder
+from anima.core.knowledge.search import semantic_search
+from anima.dependencies import AsyncSessionLocal
+from anima.services.question_service import create_pending_question
+from anima.models.user import User
 from sqlalchemy import select
 
 app_server = Server("anima")
@@ -87,9 +87,9 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         return [TextContent(type="text", text="\n\n".join(results))]
 
     elif name == "ask_question":
-        from app.core.ai.rag import build_messages
-        from app.core.ai.claude import complete
-        from app.core.ai.confidence import evaluate, INSUFFICIENT_MARKER
+        from anima.core.ai.rag import build_messages
+        from anima.core.ai.claude import complete
+        from anima.core.ai.confidence import evaluate, INSUFFICIENT_MARKER
 
         question = arguments["question"]
         embedding = await embedder.embed(question)

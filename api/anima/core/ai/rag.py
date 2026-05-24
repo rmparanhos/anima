@@ -1,5 +1,5 @@
-from app.core.knowledge.search import ChunkWithScore
-from app.core.ai.confidence import INSUFFICIENT_MARKER
+from anima.core.knowledge.search import ChunkWithScore
+from anima.core.ai.confidence import INSUFFICIENT_MARKER
 
 SYSTEM_PROMPT = f"""You are Anima, a collective knowledge base assistant.
 Answer ONLY based on the context provided below.

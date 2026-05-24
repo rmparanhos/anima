@@ -16,6 +16,13 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
+const resolvePythonPath = () => {
+  if (existsSync("./api/.venv/bin/python")) return "./api/.venv/bin/python"
+  if (existsSync("/opt/homebrew/bin/python3.12")) return "/opt/homebrew/bin/python3.12"
+  if (existsSync("/usr/bin/python3")) return "python3"
+  return "python"
+}
+
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 const API  = join(ROOT, "api")
 const WEB  = join(ROOT, "web")
@@ -25,6 +32,11 @@ const ok   = (msg) => console.log(c(92, `✓ ${msg}`))
 const warn = (msg) => console.log(c(93, `⚠ ${msg}`))
 const info = (msg) => console.log(c(94, `→ ${msg}`))
 const fail = (msg) => { console.error(c(91, `✗ ${msg}`)); process.exit(1) }
+
+const has = (bin) => {
+  try { execSync(`which ${bin}`, { stdio: "pipe" }); return true }
+  catch { return false }
+}
 
 const [,, command, ...args] = process.argv
 
@@ -66,8 +78,8 @@ switch (command) {
   }
 
   case "api": {
-    const py = existsSync("/usr/bin/python3") ? "python3" : "python"
-    spawn(py, ["-m", "uvicorn", "app.main:app", "--reload"],
+    const py = resolvePythonPath()
+    spawn(py, ["-m", "uvicorn", "anima.main:app", "--reload", "--reload-dir", "anima"],
       { cwd: API, stdio: "inherit" })
     break
   }

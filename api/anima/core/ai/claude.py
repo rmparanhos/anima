@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 from openai import AsyncOpenAI
-from app.config import settings
+from anima.config import settings
 
 _client = AsyncOpenAI(
     base_url=settings.ollama_base_url,

@@ -11,7 +11,7 @@
     "start": "node scripts/start.mjs",
     "setup": "node scripts/setup.mjs",
     "stop":  "node scripts/stop.mjs",
-    "api":   "cd api && python -m uvicorn app.main:app --reload",
+    "api":   "cd api && python -m uvicorn anima.main:app --reload --reload-dir anima",
     "web":   "cd web && npm run dev"
   },
   "devDependencies": {

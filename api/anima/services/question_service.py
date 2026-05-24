@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from app.models.question import Question, QuestionDuplicate
-from app.core.knowledge.search import search_pending_questions, add_pending_question
-from app.config import settings
+from anima.models.question import Question, QuestionDuplicate
+from anima.core.knowledge.search import search_pending_questions, add_pending_question
+from anima.config import settings
 
 
 async def create_pending_question(

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.dependencies import get_db
-from app.schemas.question import QuestionOut, AnswerSubmit, AnswerResponse, PendingQuestionsResponse
-from app.services import question_service
-from app.core.knowledge.ingestion import ingest_answer
-from app.models.question import Question
+from anima.dependencies import get_db
+from anima.schemas.question import QuestionOut, AnswerSubmit, AnswerResponse, PendingQuestionsResponse
+from anima.services import question_service
+from anima.core.knowledge.ingestion import ingest_answer
+from anima.models.question import Question
 
 router = APIRouter(prefix="/questions", tags=["questions"])
 

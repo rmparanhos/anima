@@ -2,11 +2,11 @@ import uuid
 import json
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.knowledge_chunk import KnowledgeChunk
-from app.models.question import Question
-from app.core.ai.embedder import embedder
-from app.core.ai.claude import complete
-from app.core.knowledge.search import add_chunk, remove_pending_question
+from anima.models.knowledge_chunk import KnowledgeChunk
+from anima.models.question import Question
+from anima.core.ai.embedder import embedder
+from anima.core.ai.claude import complete
+from anima.core.knowledge.search import add_chunk, remove_pending_question
 
 
 async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:

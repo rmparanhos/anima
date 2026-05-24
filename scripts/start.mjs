@@ -19,12 +19,12 @@ export default async function start() {
           setupEnv, runMigrations, installNodeDeps } = await import("./setup.mjs")
 
   checkNode()
-  const py = checkPython()
+  const basePy = checkPython()
   checkOllama()
   const model = detectModel(process.env.OLLAMA_MODEL)
   await startOllama()
-  pullModel(model)
-  installPythonDeps(py)
+  await pullModel(model)
+  const py = installPythonDeps(basePy)
   setupEnv(model)
   runMigrations(py)
   installNodeDeps()
@@ -37,7 +37,7 @@ export default async function start() {
   console.log(`\n   Press ${c(93, "Ctrl+C")} to stop.\n`)
 
   const procs = [
-    spawn(py, ["-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"],
+    spawn(py, ["-m", "uvicorn", "anima.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "anima"],
       { cwd: API, stdio: "inherit" }),
     spawn("npm", ["run", "dev"], { cwd: WEB, stdio: "inherit", shell: true }),
   ]

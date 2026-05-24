@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from app.core.knowledge.search import ChunkWithScore
-from app.config import settings
+from anima.core.knowledge.search import ChunkWithScore
+from anima.config import settings
 
 INSUFFICIENT_MARKER = "[INSUFFICIENT_CONTEXT]"
 

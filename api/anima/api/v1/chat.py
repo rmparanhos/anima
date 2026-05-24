@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.dependencies import get_db
-from app.schemas.chat import ChatMessageRequest, ChatMessageResponse, ConversationHistory, MessageOut
-from app.services import chat_service
+from anima.dependencies import get_db
+from anima.schemas.chat import ChatMessageRequest, ChatMessageResponse, ConversationHistory, MessageOut
+from anima.services import chat_service
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 

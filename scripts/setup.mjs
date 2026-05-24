@@ -12,6 +12,7 @@ import { platform, totalmem } from "node:os"
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
 const API  = join(ROOT, "api")
 const WEB  = join(ROOT, "web")
+const VENV = join(API, ".venv")
 
 // ─── colors ──────────────────────────────────────────────────────────────────
 const NO_COLOR = !process.stdout.isTTY || process.env.NO_COLOR
@@ -26,25 +27,71 @@ const run = (cmd, opts = {}) =>
   execSync(cmd, { stdio: opts.silent ? "pipe" : "inherit", ...opts })
 
 const has = (bin) => {
-  try { execSync(`which ${bin}`, { stdio: "pipe" }); return true }
-  catch { return false }
+  try {
+    if (bin.includes("/")) {
+      return existsSync(bin)
+    }
+    execSync(`which ${bin}`, { stdio: "pipe" })
+    return true
+  } catch {
+    return false
+  }
 }
+
+const findPython = () => {
+  const candidates = [
+    "python3.12",
+    "python3",
+    "python",
+    "/opt/homebrew/bin/python3.12",
+    "/usr/local/bin/python3.12"
+  ]
+
+  for (const candidate of candidates) {
+    if (!has(candidate)) continue
+    try {
+      const ver = execSync(`${candidate} --version`, { encoding: "utf8" }).trim()
+      const [, major, minor] = ver.match(/(\d+)\.(\d+)/) ?? []
+      if (Number(major) > 3 || (Number(major) === 3 && Number(minor) >= 12)) {
+        return { py: candidate, ver }
+      }
+    } catch {
+      continue
+    }
+  }
+  return null
+}
+
+const venvPython = () => {
+  const binDir = platform() === "win32" ? "Scripts" : "bin"
+  return join(VENV, binDir, platform() === "win32" ? "python.exe" : "python")
+}
+
+const createPythonVenv = (py) => {
+  if (existsSync(venvPython())) {
+    ok("Virtual environment found")
+    return venvPython()
+  }
+
+  warn("Virtual environment not found. Creating .venv...")
+  run(`${py} -m venv "${VENV}"`)
+  ok("Virtual environment created")
+  return venvPython()
+}
+
+export const resolveVenvPython = (py) =>
+  existsSync(venvPython()) ? venvPython() : py
 
 // ─── 1. Python ───────────────────────────────────────────────────────────────
 export function checkPython() {
   info("Checking Python...")
-  if (!has("python3") && !has("python"))
-    fail("Python 3.12+ not found. Install it at https://python.org")
 
-  const py = has("python3") ? "python3" : "python"
-  const ver = execSync(`${py} --version`, { encoding: "utf8" }).trim()
-  const [, major, minor] = ver.match(/(\d+)\.(\d+)/) ?? []
+  const python = findPython()
+  if (!python)
+    fail("Python 3.12+ required. Install it at https://python.org or via Homebrew.")
 
-  if (Number(major) < 3 || (Number(major) === 3 && Number(minor) < 12))
-    fail(`Python 3.12+ required (found: ${ver})`)
-
-  ok(ver)
-  return py
+  ok(python.ver)
+  return python.py
 }
 
 // ─── 2. Node ─────────────────────────────────────────────────────────────────
@@ -115,8 +162,11 @@ export function pullModel(model) {
 // ─── 7. Python dependencies ──────────────────────────────────────────────────
 export function installPythonDeps(py) {
   info("Installing Python dependencies...")
-  run(`${py} -m pip install "${API}" --upgrade -q`)
+  const venvPy = createPythonVenv(py)
+  run(`${venvPy} -m pip install --upgrade pip setuptools wheel`)
+  run(`${venvPy} -m pip install "${API}" --upgrade -q`)
   ok("Python dependencies OK")
+  return venvPy
 }
 
 // ─── 8. .env ─────────────────────────────────────────────────────────────────
@@ -162,12 +212,12 @@ export default async function setup() {
   console.log(c(94, "\n╔══════════════════╗\n║   anima setup    ║\n╚══════════════════╝\n"))
 
   checkNode()
-  const py = checkPython()
+  const basePy = checkPython()
   checkOllama()
   const model = detectModel(process.env.OLLAMA_MODEL)
   await startOllama()
-  pullModel(model)
-  installPythonDeps(py)
+  await pullModel(model)
+  const py = installPythonDeps(basePy)
   setupEnv(model)
   runMigrations(py)
   installNodeDeps()

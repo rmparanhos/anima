@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, ForeignKey, DateTime, Float, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.models.base import Base
+from anima.models.base import Base
 
 
 class Message(Base):

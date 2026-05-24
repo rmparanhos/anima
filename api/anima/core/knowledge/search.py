@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import chromadb
-from app.config import settings
+from anima.config import settings
 
 _client: chromadb.ClientAPI | None = None
 COLLECTION_NAME = "knowledge"

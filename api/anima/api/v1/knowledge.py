@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from datetime import datetime
-from app.dependencies import get_db
-from app.services.knowledge_service import get_all_chunks
+from anima.dependencies import get_db
+from anima.services.knowledge_service import get_all_chunks
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 

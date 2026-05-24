@@ -2,15 +2,15 @@ import json
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.conversation import Conversation
-from app.models.message import Message
-from app.models.user import User
-from app.core.ai.embedder import embedder
-from app.core.knowledge.search import semantic_search
-from app.core.ai.rag import build_messages
-from app.core.ai.claude import complete
-from app.core.ai.confidence import evaluate, INSUFFICIENT_MARKER
-from app.services.question_service import create_pending_question
+from anima.models.conversation import Conversation
+from anima.models.message import Message
+from anima.models.user import User
+from anima.core.ai.embedder import embedder
+from anima.core.knowledge.search import semantic_search
+from anima.core.ai.rag import build_messages
+from anima.core.ai.claude import complete
+from anima.core.ai.confidence import evaluate, INSUFFICIENT_MARKER
+from anima.services.question_service import create_pending_question
 
 
 async def process_message(

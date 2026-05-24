@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Text, Boolean, DateTime
 from sqlalchemy.orm import Mapped, mapped_column
-from app.models.base import Base
+from anima.models.base import Base
 
 
 class KnowledgeChunk(Base):

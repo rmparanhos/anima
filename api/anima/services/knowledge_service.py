@@ -1,7 +1,7 @@
 import json
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from app.models.knowledge_chunk import KnowledgeChunk
+from anima.models.knowledge_chunk import KnowledgeChunk
 
 
 async def get_all_chunks(db: AsyncSession, page: int = 1, limit: int = 50) -> tuple[list[KnowledgeChunk], int]:

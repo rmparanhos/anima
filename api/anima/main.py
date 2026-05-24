@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1.router import router
+from anima.api.v1.router import router
 
 app = FastAPI(title="Anima", description="Collective knowledge base powered by AI", version="0.1.0")
 
