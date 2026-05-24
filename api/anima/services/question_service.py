@@ -1,8 +1,11 @@
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from anima.models.question import Question, QuestionDuplicate
 from anima.core.knowledge.search import search_pending_questions, add_pending_question_async
 from anima.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 async def create_pending_question(
@@ -21,15 +24,31 @@ async def create_pending_question(
         if candidate.score >= settings.question_dedup_threshold:
             canonical = await db.get(Question, candidate.id)
             if canonical:
+                # Create a Question record for this duplicate so we can reference it in
+                # QuestionDuplicate.duplicate_id (requires a real FK target).
+                dup_question = Question(
+                    asked_by=user_id,
+                    original_message_id=message_id,
+                    normalized_text=normalized,
+                    status="rejected",  # duplicate — never goes to pending queue
+                )
+                db.add(dup_question)
+                await db.flush()  # assign dup_question.id
+
                 canonical.votes += 1
-                dup = QuestionDuplicate(
+                dup_record = QuestionDuplicate(
                     canonical_id=canonical.id,
-                    duplicate_id=canonical.id,
+                    duplicate_id=dup_question.id,  # was incorrectly canonical.id
                     similarity=candidate.score,
                 )
-                db.add(dup)
+                db.add(dup_record)
                 await db.commit()
                 await db.refresh(canonical)
+
+                logger.info(
+                    "Duplicate question detected (score=%.3f): %s → canonical %s",
+                    candidate.score, dup_question.id, canonical.id,
+                )
                 return canonical
 
     question = Question(
@@ -57,7 +76,9 @@ async def get_pending_questions(db: AsyncSession, page: int = 1, limit: int = 20
     )
     questions = list(result.scalars().all())
 
-    total_result = await db.execute(select(func.count()).select_from(Question).where(Question.status == "pending"))
+    total_result = await db.execute(
+        select(func.count()).select_from(Question).where(Question.status == "pending")
+    )
     total = total_result.scalar_one()
 
     return questions, total

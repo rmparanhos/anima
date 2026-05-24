@@ -1,16 +1,18 @@
 import json
+import logging
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from anima.models.conversation import Conversation
 from anima.models.message import Message
-from anima.models.user import User
 from anima.core.ai.embedder import embedder
 from anima.core.knowledge.search import semantic_search
 from anima.core.ai.rag import build_messages
 from anima.core.ai.claude import complete
 from anima.core.ai.confidence import evaluate, INSUFFICIENT_MARKER
 from anima.services.question_service import create_pending_question
+
+logger = logging.getLogger(__name__)
 
 
 async def process_message(
@@ -21,6 +23,8 @@ async def process_message(
 ) -> dict:
     if conversation_id:
         conv = await db.get(Conversation, conversation_id)
+        if not conv:
+            raise ValueError(f"Conversation {conversation_id!r} not found")
     else:
         conv = Conversation(user_id=user_id)
         db.add(conv)
@@ -36,7 +40,12 @@ async def process_message(
     history = await _load_history(conv.id, db)
     messages = build_messages(content, chunks, history)
 
-    response_text = await complete(messages)
+    # Call the LLM; on failure treat it as no context so the question is queued.
+    try:
+        response_text = await complete(messages)
+    except Exception as exc:
+        logger.error("LLM call failed: %s", exc)
+        response_text = INSUFFICIENT_MARKER
 
     confidence = evaluate(chunks, response_text)
 

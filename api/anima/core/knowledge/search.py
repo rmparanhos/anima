@@ -1,16 +1,26 @@
 import asyncio
+import logging
+import threading
 from dataclasses import dataclass
 import chromadb
 from anima.config import settings
 
+logger = logging.getLogger(__name__)
+
 _client: chromadb.ClientAPI | None = None
+_client_lock = threading.Lock()
 COLLECTION_NAME = "knowledge"
+PENDING_COLLECTION_NAME = "pending_questions"
+PENDING_META = {"hnsw:space": "cosine"}
 
 
 def _get_client() -> chromadb.ClientAPI:
+    """Thread-safe double-checked singleton for the ChromaDB client."""
     global _client
     if _client is None:
-        _client = chromadb.PersistentClient(path=settings.chroma_path)
+        with _client_lock:
+            if _client is None:
+                _client = chromadb.PersistentClient(path=settings.chroma_path)
     return _client
 
 
@@ -18,6 +28,11 @@ def _get_collection() -> chromadb.Collection:
     return _get_client().get_or_create_collection(COLLECTION_NAME, metadata={"hnsw:space": "cosine"})
 
 
+def _get_pending_collection() -> chromadb.Collection:
+    return _get_client().get_or_create_collection(PENDING_COLLECTION_NAME, metadata=PENDING_META)
+
+
+# Public sync accessors (kept for compatibility / sync contexts)
 def get_chroma_client() -> chromadb.ClientAPI:
     return _get_client()
 
@@ -33,6 +48,8 @@ class ChunkWithScore:
     score: float
     metadata: dict
 
+
+# ── knowledge collection ─────────────────────────────────────────────────────
 
 async def semantic_search(query_embedding: list[float], limit: int | None = None) -> list[ChunkWithScore]:
     k = limit or settings.rag_top_k
@@ -64,27 +81,35 @@ async def semantic_search(query_embedding: list[float], limit: int | None = None
 
 
 async def add_chunk_async(chunk_id: str, content: str, embedding: list[float], metadata: dict) -> None:
-    await asyncio.to_thread(lambda: _get_collection().add(ids=[chunk_id], documents=[content], embeddings=[embedding], metadatas=[metadata]))
+    await asyncio.to_thread(
+        lambda: _get_collection().add(
+            ids=[chunk_id], documents=[content], embeddings=[embedding], metadatas=[metadata]
+        )
+    )
 
 
 def add_chunk(chunk_id: str, content: str, embedding: list[float], metadata: dict) -> None:
     _get_collection().add(ids=[chunk_id], documents=[content], embeddings=[embedding], metadatas=[metadata])
 
 
+# ── pending-questions collection ─────────────────────────────────────────────
+
 async def remove_pending_question_async(question_id: str) -> None:
     def _run():
         try:
-            _get_client().get_or_create_collection("pending_questions", metadata={"hnsw:space": "cosine"}).delete(ids=[question_id])
-        except Exception:
-            pass
+            _get_pending_collection().delete(ids=[question_id])
+        except Exception as exc:
+            # Non-fatal: log but don't crash ingestion
+            logger.warning("Could not remove pending question %s from ChromaDB: %s", question_id, exc)
+
     await asyncio.to_thread(_run)
 
 
 def remove_pending_question(question_id: str) -> None:
     try:
-        _get_client().get_or_create_collection("pending_questions", metadata={"hnsw:space": "cosine"}).delete(ids=[question_id])
-    except Exception:
-        pass
+        _get_pending_collection().delete(ids=[question_id])
+    except Exception as exc:
+        logger.warning("Could not remove pending question %s from ChromaDB: %s", question_id, exc)
 
 
 async def search_pending_questions(query_embedding: list[float], pending_ids: list[str]) -> list[ChunkWithScore]:
@@ -92,7 +117,7 @@ async def search_pending_questions(query_embedding: list[float], pending_ids: li
         return []
 
     def _run():
-        pq = _get_client().get_or_create_collection("pending_questions", metadata={"hnsw:space": "cosine"})
+        pq = _get_pending_collection()
         if pq.count() == 0:
             return None
         return pq.query(
@@ -119,11 +144,20 @@ async def search_pending_questions(query_embedding: list[float], pending_ids: li
 
 async def add_pending_question_async(question_id: str, text: str, embedding: list[float]) -> None:
     def _run():
-        pq = _get_client().get_or_create_collection("pending_questions", metadata={"hnsw:space": "cosine"})
-        pq.add(ids=[question_id], documents=[text], embeddings=[embedding], metadatas=[{"question_id": question_id}])
+        _get_pending_collection().add(
+            ids=[question_id],
+            documents=[text],
+            embeddings=[embedding],
+            metadatas=[{"question_id": question_id}],
+        )
+
     await asyncio.to_thread(_run)
 
 
 def add_pending_question(question_id: str, text: str, embedding: list[float]) -> None:
-    pq = _get_client().get_or_create_collection("pending_questions", metadata={"hnsw:space": "cosine"})
-    pq.add(ids=[question_id], documents=[text], embeddings=[embedding], metadatas=[{"question_id": question_id}])
+    _get_pending_collection().add(
+        ids=[question_id],
+        documents=[text],
+        embeddings=[embedding],
+        metadatas=[{"question_id": question_id}],
+    )
