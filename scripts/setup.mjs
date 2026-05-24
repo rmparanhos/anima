@@ -201,10 +201,10 @@ export function runMigrations(py) {
 // ─── 10. Node deps ───────────────────────────────────────────────────────────
 export function installNodeDeps() {
   info("Checking Node.js dependencies (web)...")
-  if (existsSync(join(WEB, "node_modules"))) { ok("Node.js dependencies OK"); return }
-  warn("Installing Node.js dependencies...")
+  // Always sync deps — a package.json change (e.g. Next→Vite) would leave the
+  // old node_modules intact if we only checked for the directory's existence.
   run("npm install --silent", { cwd: WEB })
-  ok("Node.js dependencies installed")
+  ok("Node.js dependencies OK")
 }
 
 // ─── export default (used by anima CLI) ──────────────────────────────────────
