@@ -13,12 +13,16 @@ from anima.config import settings
 logger = logging.getLogger(__name__)
 
 
-def _parse_meta(raw: str) -> tuple[str, str]:
-    """Extract TITLE and TOPIC from the LLM's structured response."""
-    title, topic = "Knowledge Entry", "General"
+def _parse_meta(raw: str) -> tuple[str, str, str]:
+    """Extract ENTITY, TITLE and TOPIC from the LLM's structured response."""
+    entity, title, topic = "", "Knowledge Entry", "General"
     for line in raw.strip().splitlines():
         upper = line.upper()
-        if upper.startswith("TITLE:"):
+        if upper.startswith("ENTITY:"):
+            v = line[7:].strip().strip("\"'")
+            if v:
+                entity = v
+        elif upper.startswith("TITLE:"):
             v = line[6:].strip().strip("\"'")
             if v:
                 title = v
@@ -26,7 +30,9 @@ def _parse_meta(raw: str) -> tuple[str, str]:
             v = line[6:].strip().strip("\"'")
             if v:
                 topic = v
-    return title, topic
+    if not entity:
+        entity = title  # fallback: entity = title when not extractable
+    return entity, title, topic
 
 
 async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
@@ -49,29 +55,34 @@ async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
         },
     ])
 
-    # Step 2 — title + topic in a single LLM call (saves one round-trip)
+    # Step 2 — entity + title + topic in a single LLM call
     raw_meta = await complete([
         {
             "role": "system",
             "content": (
-                f"For the documentation text below, provide two items in {lang}.\n\n"
-                "TITLE: A section heading, 4-7 words, like a chapter title in a technical manual.\n"
-                "TOPIC: A broad category, 2-4 words, e.g. 'API Integration', 'Authentication', 'Data Processing'.\n\n"
+                f"For the documentation text below, provide three items in {lang}.\n\n"
+                "ENTITY: The specific product, feature, system, or named concept this text is about.\n"
+                "  Examples: 'Addin do Novo Pricing', 'Pipeline de Deploy', 'Auth Service', 'Relatório de Vendas'.\n"
+                "  This is the SUBJECT — what the documentation describes.\n"
+                "TITLE: A section heading for this specific piece of information, 4-7 words.\n"
+                "TOPIC: A broad category, 2-4 words, e.g. 'API Integration', 'Financeiro', 'Infraestrutura'.\n\n"
                 "Respond EXACTLY in this format and nothing else:\n"
+                "ENTITY: <entity name>\n"
                 "TITLE: <title>\n"
                 "TOPIC: <topic>"
             ),
         },
         {"role": "user", "content": content},
     ])
-    title, topic = _parse_meta(raw_meta)
-    logger.info("Ingested chunk — topic=%r title=%r", topic, title)
+    entity, title, topic = _parse_meta(raw_meta)
+    logger.info("Ingested chunk — entity=%r topic=%r title=%r", entity, topic, title)
 
     embedding = await embedder.embed(content)
     chunk_id = str(uuid.uuid4())
     metadata = {
         "source_type": "qa_answer",
         "question_id": question.id,
+        "entity": entity,
         "title": title,
         "topic": topic,
     }

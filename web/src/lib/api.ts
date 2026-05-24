@@ -16,8 +16,9 @@ export type User = { id: string; handle: string; created_at: string }
 export type Message = { id: string; role: string; content: string; created_at: string; confidence_score?: number }
 export type ChatResponse = { message_id: string; conversation_id: string; content: string; confidence_score?: number; status: "answered" | "pending"; question_id?: string }
 export type Question = { id: string; normalized_text: string; status: string; votes: number; created_at: string; answer_text?: string; answered_at?: string }
-export type KnowledgeChunk = { id: string; title: string; topic: string; content: string; source_type: string; source_id?: string; created_at: string }
-export type GraphNode = { id: string; title: string; topic: string; content: string }
+export type KnowledgeChunk = { id: string; entity: string; title: string; topic: string; content: string; source_type: string; source_id?: string; created_at: string }
+export type ChunkPreview = { id: string; title: string; content: string }
+export type GraphNode = { id: string; entity: string; topic: string; chunk_count: number; chunks: ChunkPreview[]; content: string }
 export type GraphLink = { source: string; target: string; value: number }
 export type GraphData = { nodes: GraphNode[]; links: GraphLink[] }
 

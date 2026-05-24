@@ -1,11 +1,12 @@
 import asyncio
 import json
 import numpy as np
+from collections import defaultdict
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from anima.models.knowledge_chunk import KnowledgeChunk
 
-GRAPH_EDGE_THRESHOLD = 0.42  # cosine similarity above which two chunks are "related"
+GRAPH_EDGE_THRESHOLD = 0.40  # cosine similarity between entity centroids
 
 
 async def get_all_chunks(db: AsyncSession, page: int = 1, limit: int = 50) -> tuple[list[KnowledgeChunk], int]:
@@ -26,13 +27,34 @@ async def get_all_chunks(db: AsyncSession, page: int = 1, limit: int = 50) -> tu
     return chunks, total
 
 
-async def get_knowledge_graph(db: AsyncSession) -> dict:
-    """Build a knowledge graph from stored chunks and their ChromaDB embeddings.
+def _extract_meta(chunk: KnowledgeChunk) -> tuple[str, str, str]:
+    """Return (entity, title, topic) from a chunk's metadata_json."""
+    try:
+        meta = json.loads(chunk.metadata_json or "{}")
+        entity = meta.get("entity") or ""
+        title  = meta.get("title")  or ""
+        topic  = meta.get("topic")  or ""
+    except Exception:
+        entity, title, topic = "", "", ""
 
-    Nodes  = knowledge chunks (title, topic, short content preview)
-    Edges  = pairs whose cosine similarity exceeds GRAPH_EDGE_THRESHOLD —
-             semantically related concepts naturally cluster together via the
-             force-directed layout in the frontend.
+    if not title:
+        words = chunk.content.split()
+        title = " ".join(words[:6]) + ("…" if len(words) > 6 else "")
+    if not topic:
+        topic = "General"
+    if not entity:
+        entity = title  # pre-entity chunks: entity = title
+
+    return entity, title, topic
+
+
+async def get_knowledge_graph(db: AsyncSession) -> dict:
+    """Build an entity-based knowledge graph.
+
+    Nodes  = entities (distinct named products / features / concepts).
+             Each node carries the list of associated chunks for the detail panel.
+    Edges  = pairs of entities whose embedding centroids have cosine similarity
+             above GRAPH_EDGE_THRESHOLD — so related entities cluster together.
     """
     chunks, _ = await get_all_chunks(db, page=1, limit=500)
     if not chunks:
@@ -49,51 +71,80 @@ async def get_knowledge_graph(db: AsyncSession) -> dict:
     result = await asyncio.to_thread(_fetch_embeddings)
 
     present_ids: list[str] = result["ids"]
-    embeddings_raw: list[list[float]] = result["embeddings"]
+    embeddings_raw: list   = result["embeddings"]
 
     if not present_ids:
         return {"nodes": [], "links": []}
 
-    # Build a quick lookup so we can skip chunks missing from ChromaDB
+    # Build lookup: chunk_id → (embedding, chunk)
     chunk_by_id = {c.id: c for c in chunks}
-    present_set = set(present_ids)
+    emb_by_id: dict[str, np.ndarray] = {
+        cid: np.array(emb, dtype=np.float32)
+        for cid, emb in zip(present_ids, embeddings_raw)
+        if cid in chunk_by_id
+    }
 
+    # ── Group chunks by entity ────────────────────────────────────────────────
+    entity_chunks: dict[str, list[tuple[KnowledgeChunk, np.ndarray]]] = defaultdict(list)
+    entity_topic:  dict[str, str] = {}
+
+    for cid, emb in emb_by_id.items():
+        chunk = chunk_by_id[cid]
+        entity, _title, topic = _extract_meta(chunk)
+        entity_chunks[entity].append((chunk, emb))
+        entity_topic.setdefault(entity, topic)
+
+    entities = list(entity_chunks.keys())
+    if not entities:
+        return {"nodes": [], "links": []}
+
+    # ── Compute centroid embedding per entity ─────────────────────────────────
+    def _centroid(pairs: list[tuple[KnowledgeChunk, np.ndarray]]) -> np.ndarray:
+        mat  = np.stack([e for _, e in pairs])
+        c    = mat.mean(axis=0)
+        norm = np.linalg.norm(c)
+        return c / norm if norm > 0 else c
+
+    centroids = {e: _centroid(entity_chunks[e]) for e in entities}
+
+    # ── Build nodes ───────────────────────────────────────────────────────────
     nodes = []
-    for cid, emb in zip(present_ids, embeddings_raw):
-        c = chunk_by_id.get(cid)
-        if not c:
-            continue
-        meta = {}
-        try:
-            meta = json.loads(c.metadata_json or "{}")
-        except Exception:
-            pass
+    for entity in entities:
+        pairs = entity_chunks[entity]
+        chunk_previews = [
+            {
+                "id":      c.id,
+                "title":   _extract_meta(c)[1],
+                "content": c.content,
+            }
+            for c, _ in sorted(pairs, key=lambda x: x[0].created_at)
+        ]
+        # Short preview for the tooltip (first chunk, first 200 chars)
+        preview = pairs[0][0].content
         nodes.append({
-            "id": cid,
-            "title": meta.get("title") or c.content[:50],
-            "topic": meta.get("topic") or "General",
-            "content": c.content[:300],
+            "id":          entity,
+            "entity":      entity,
+            "topic":       entity_topic[entity],
+            "chunk_count": len(pairs),
+            "chunks":      chunk_previews,
+            "content":     preview[:200] + ("…" if len(preview) > 200 else ""),
         })
 
-    if len(nodes) < 2:
-        return {"nodes": nodes, "links": []}
-
-    # Cosine similarity matrix (numpy, fast even for 500×500)
-    matrix = np.array(embeddings_raw, dtype=np.float32)
-    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
-    matrix /= np.maximum(norms, 1e-10)
-    sim = matrix @ matrix.T  # shape (n, n)
-
+    # ── Build edges via centroid cosine similarity ────────────────────────────
+    n = len(entities)
     links = []
-    n = len(present_ids)
-    for i in range(n):
-        for j in range(i + 1, n):
-            score = float(sim[i, j])
-            if score >= GRAPH_EDGE_THRESHOLD:
-                links.append({
-                    "source": present_ids[i],
-                    "target": present_ids[j],
-                    "value": round(score, 3),
-                })
+    if n > 1:
+        mat = np.stack([centroids[e] for e in entities])  # (n, d)
+        sim = mat @ mat.T                                  # (n, n)
+
+        for i in range(n):
+            for j in range(i + 1, n):
+                score = float(sim[i, j])
+                if score >= GRAPH_EDGE_THRESHOLD:
+                    links.append({
+                        "source": entities[i],
+                        "target": entities[j],
+                        "value":  round(score, 3),
+                    })
 
     return {"nodes": nodes, "links": links}
