@@ -6,6 +6,7 @@ import Layout from "./components/Layout"
 import ChatPage from "./pages/Chat"
 import PendingPage from "./pages/Pending"
 import DocsPage from "./pages/Docs"
+import EntityPage from "./pages/EntityPage"
 import "./index.css"
 
 const queryClient = new QueryClient()
@@ -20,6 +21,7 @@ createRoot(document.getElementById("root")!).render(
             <Route path="chat" element={<ChatPage />} />
             <Route path="pending" element={<PendingPage />} />
             <Route path="docs" element={<DocsPage />} />
+            <Route path="docs/:entity" element={<EntityPage />} />
           </Route>
         </Routes>
       </BrowserRouter>
