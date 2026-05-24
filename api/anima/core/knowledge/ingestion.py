@@ -7,6 +7,7 @@ from anima.models.knowledge_chunk import KnowledgeChunk
 from anima.models.question import Question
 from anima.core.ai.embedder import embedder
 from anima.core.ai.claude import complete
+from anima.core.ai.web_search import search_web
 from anima.core.knowledge.search import add_chunk_async, remove_pending_question_async
 from anima.config import settings
 
@@ -31,31 +32,54 @@ def _parse_meta(raw: str) -> tuple[str, str, str]:
             if v:
                 topic = v
     if not entity:
-        entity = title  # fallback: entity = title when not extractable
+        entity = title
     return entity, title, topic
+
+
+def _build_prose_user_message(question: Question, web_results: list[dict]) -> str:
+    """Combine the Q&A pair with optional web snippets into a user message."""
+    parts = [
+        f"Question: {question.normalized_text}",
+        f"Answer: {question.answer_text}",
+    ]
+    if web_results:
+        snippets = "\n".join(
+            f"- {r['title']}: {r['body']}"
+            for r in web_results
+            if r.get("title") or r.get("body")
+        )
+        if snippets:
+            parts.append(f"\nAdditional context (web):\n{snippets}")
+    return "\n\n".join(parts)
 
 
 async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
     lang = settings.language
 
-    # Step 1 — narrative prose from the Q&A pair
+    # Step 1 — optional web search to enrich the documentation
+    web_results: list[dict] = []
+    if settings.web_search_enabled:
+        web_results = await search_web(question.normalized_text, max_results=3)
+        if web_results:
+            logger.info("Web search returned %d snippets for %r", len(web_results), question.normalized_text)
+        else:
+            logger.debug("Web search returned no results — continuing without enrichment")
+
+    # Step 2 — narrative prose from Q&A + web context
+    prose_system = (
+        f"You are a technical writer. Write documentation in {lang}. "
+        "Given a question, its answer, and optional web context, write clear, "
+        "concise documentation. Prioritize the provided answer as the authoritative "
+        "source. Use web context only to add relevant technical terms or background. "
+        "Write in the third person, present tense. "
+        "No bullet points — write flowing prose. 2-4 sentences max."
+    )
     content = await complete([
-        {
-            "role": "system",
-            "content": (
-                f"You are a technical writer. Write documentation in {lang}. "
-                "Given a question and its answer, write clear, concise documentation. "
-                "Write in the third person, present tense. "
-                "No bullet points — write flowing prose. 2-4 sentences max."
-            ),
-        },
-        {
-            "role": "user",
-            "content": f"Question: {question.normalized_text}\n\nAnswer: {question.answer_text}",
-        },
+        {"role": "system", "content": prose_system},
+        {"role": "user",   "content": _build_prose_user_message(question, web_results)},
     ])
 
-    # Step 2 — entity + title + topic in a single LLM call
+    # Step 3 — entity + title + topic in a single LLM call
     raw_meta = await complete([
         {
             "role": "system",
@@ -75,16 +99,18 @@ async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
         {"role": "user", "content": content},
     ])
     entity, title, topic = _parse_meta(raw_meta)
-    logger.info("Ingested chunk — entity=%r topic=%r title=%r", entity, topic, title)
+    logger.info("Ingested chunk — entity=%r topic=%r title=%r web_enriched=%s",
+                entity, topic, title, bool(web_results))
 
     embedding = await embedder.embed(content)
     chunk_id = str(uuid.uuid4())
     metadata = {
-        "source_type": "qa_answer",
-        "question_id": question.id,
-        "entity": entity,
-        "title": title,
-        "topic": topic,
+        "source_type":  "qa_answer",
+        "question_id":  question.id,
+        "entity":       entity,
+        "title":        title,
+        "topic":        topic,
+        "web_enriched": bool(web_results),
     }
 
     await add_chunk_async(chunk_id, content, embedding, metadata)

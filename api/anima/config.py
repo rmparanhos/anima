@@ -27,5 +27,12 @@ class Settings(BaseSettings):
     rag_top_k: int = 5
     question_dedup_threshold: float = 0.90
 
+    # Web search — enriches generated documentation with public web context.
+    # Provider priority: Brave (if BRAVE_API_KEY set) → ddgs (no key needed).
+    # Set WEB_SEARCH_ENABLED=false to disable entirely.
+    # Brave free tier: 2 000 queries/month — https://brave.com/search/api/
+    web_search_enabled: bool = True
+    brave_api_key: str = ""
+
 
 settings = Settings()
