@@ -1,11 +1,8 @@
 import type { NextConfig } from "next"
-import { dirname } from "node:path"
-import { fileURLToPath } from "node:url"
 
-const nextConfig: NextConfig = {
-  turbopack: {
-    root: dirname(fileURLToPath(import.meta.url)),
-  },
-}
+// Keep it minimal — the turbopack.root option caused Turbopack to scan the
+// entire monorepo (including api/) when resolving modules, making first-compile
+// extremely slow and memory-hungry.
+const nextConfig: NextConfig = {}
 
-export default nextConfig;
+export default nextConfig

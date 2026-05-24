@@ -1,9 +1,11 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
 import "./globals.css"
 import Providers from "./providers"
 
-const inter = Inter({ subsets: ["latin"] })
+// Google Fonts (next/font/google) downloads font files at compile-time.
+// A slow or blocked network request causes the dev "compiling" phase to hang
+// indefinitely.  The font-family stack in globals.css already uses
+// system-ui / -apple-system, so Inter isn't needed in dev.
 
 export const metadata: Metadata = {
   title: "Anima — Knowledge Base",
@@ -12,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.className}>
+    <html lang="en">
       <body style={{ background: "#111118", color: "#e2e2e9", minHeight: "100vh" }}>
         <Providers>
           <nav style={{ background: "#16161f", borderBottom: "1px solid #2a2a3a", padding: "0 24px", height: "48px", display: "flex", alignItems: "center", gap: "8px" }}>
