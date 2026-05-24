@@ -17,6 +17,9 @@ export type Message = { id: string; role: string; content: string; created_at: s
 export type ChatResponse = { message_id: string; conversation_id: string; content: string; confidence_score?: number; status: "answered" | "pending"; question_id?: string }
 export type Question = { id: string; normalized_text: string; status: string; votes: number; created_at: string; answer_text?: string; answered_at?: string }
 export type KnowledgeChunk = { id: string; title: string; topic: string; content: string; source_type: string; source_id?: string; created_at: string }
+export type GraphNode = { id: string; title: string; topic: string; content: string }
+export type GraphLink = { source: string; target: string; value: number }
+export type GraphData = { nodes: GraphNode[]; links: GraphLink[] }
 
 export const api = {
   createUser: (handle: string) => request<User>("/api/v1/users", { method: "POST", body: JSON.stringify({ handle }) }),
@@ -28,4 +31,5 @@ export const api = {
     request(`/api/v1/questions/${question_id}/answer`, { method: "POST", body: JSON.stringify({ answer_text, user_id }) }),
   voteQuestion: (question_id: string) => request(`/api/v1/questions/${question_id}/vote`, { method: "POST" }),
   getKnowledge: (page = 1, limit = 200) => request<{ chunks: KnowledgeChunk[]; total: number }>(`/api/v1/knowledge?page=${page}&limit=${limit}`),
+  getKnowledgeGraph: () => request<GraphData>("/api/v1/knowledge/graph"),
 }

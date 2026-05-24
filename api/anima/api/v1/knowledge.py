@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from datetime import datetime
 from anima.dependencies import get_db
-from anima.services.knowledge_service import get_all_chunks
+from anima.services.knowledge_service import get_all_chunks, get_knowledge_graph
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
@@ -24,8 +24,25 @@ class KnowledgeResponse(BaseModel):
     total: int
 
 
+class GraphNode(BaseModel):
+    id: str
+    title: str
+    topic: str
+    content: str
+
+
+class GraphLink(BaseModel):
+    source: str
+    target: str
+    value: float
+
+
+class GraphResponse(BaseModel):
+    nodes: list[GraphNode]
+    links: list[GraphLink]
+
+
 def _extract_meta(chunk) -> tuple[str, str]:
-    """Extract (title, topic) from metadata_json with graceful fallbacks."""
     try:
         meta = json.loads(chunk.metadata_json or "{}")
         title = meta.get("title") or ""
@@ -63,4 +80,18 @@ async def list_knowledge(
             for c in chunks
         ],
         total=total,
+    )
+
+
+@router.get("/graph", response_model=GraphResponse)
+async def knowledge_graph(db: AsyncSession = Depends(get_db)):
+    """Return nodes + links for a force-directed knowledge graph.
+
+    Edges connect chunks whose semantic similarity (cosine) exceeds a threshold,
+    so related concepts cluster together automatically in the frontend layout.
+    """
+    data = await get_knowledge_graph(db)
+    return GraphResponse(
+        nodes=[GraphNode(**n) for n in data["nodes"]],
+        links=[GraphLink(**l) for l in data["links"]],
     )
