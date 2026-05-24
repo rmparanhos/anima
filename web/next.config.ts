@@ -1,8 +1,13 @@
 import type { NextConfig } from "next"
 
-// Keep it minimal — the turbopack.root option caused Turbopack to scan the
-// entire monorepo (including api/) when resolving modules, making first-compile
-// extremely slow and memory-hungry.
-const nextConfig: NextConfig = {}
+// turbopack.root tells Turbopack where the workspace root is.
+// Without it, Turbopack walks up and finds the monorepo's package-lock.json,
+// then scans the entire monorepo (api/, scripts/, …) during compilation.
+// Setting it to "." pins the root to the web/ directory itself.
+const nextConfig: NextConfig = {
+  turbopack: {
+    root: ".",
+  },
+}
 
 export default nextConfig
