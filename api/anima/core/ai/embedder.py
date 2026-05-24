@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
 import asyncio
-from functools import lru_cache
+from abc import ABC, abstractmethod
 
 
 class EmbedderBase(ABC):
@@ -12,25 +11,29 @@ class EmbedderBase(ABC):
 
 
 class LocalEmbedder(EmbedderBase):
-    """Embeddings locais via sentence-transformers. Sem API key, sem custo."""
+    """Local embeddings via sentence-transformers. No API key, no cost."""
 
-    MODEL_NAME = "all-MiniLM-L6-v2"  # ~90MB, dimensão 384
+    MODEL_NAME = "all-MiniLM-L6-v2"  # ~90MB, 384 dimensions
+    _model = None
 
-    @lru_cache(maxsize=1)
     def _get_model(self):
-        from sentence_transformers import SentenceTransformer
-        return SentenceTransformer(self.MODEL_NAME)
+        """Load model synchronously. MUST be called from a thread, never the event loop."""
+        if self._model is None:
+            from sentence_transformers import SentenceTransformer
+            self._model = SentenceTransformer(self.MODEL_NAME)
+        return self._model
 
     async def embed(self, text: str) -> list[float]:
-        loop = asyncio.get_event_loop()
-        model = self._get_model()
-        vector = await loop.run_in_executor(None, lambda: model.encode(text, normalize_embeddings=True))
+        # Run everything in a thread: model load (first time) + encode
+        def _run():
+            return self._get_model().encode(text, normalize_embeddings=True)
+        vector = await asyncio.to_thread(_run)
         return vector.tolist()
 
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        loop = asyncio.get_event_loop()
-        model = self._get_model()
-        vectors = await loop.run_in_executor(None, lambda: model.encode(texts, normalize_embeddings=True))
+        def _run():
+            return self._get_model().encode(texts, normalize_embeddings=True)
+        vectors = await asyncio.to_thread(_run)
         return [v.tolist() for v in vectors]
 
 

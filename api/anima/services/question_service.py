@@ -1,14 +1,14 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from anima.models.question import Question, QuestionDuplicate
-from anima.core.knowledge.search import search_pending_questions, add_pending_question
+from anima.core.knowledge.search import search_pending_questions, add_pending_question_async
 from anima.config import settings
 
 
 async def create_pending_question(
     text: str,
     user_id: str,
-    message_id: str,
+    message_id: str | None,
     query_embedding: list[float],
     db: AsyncSession,
 ) -> Question:
@@ -40,7 +40,7 @@ async def create_pending_question(
     db.add(question)
     await db.flush()
 
-    add_pending_question(question.id, normalized, query_embedding)
+    await add_pending_question_async(question.id, normalized, query_embedding)
     await db.commit()
     await db.refresh(question)
     return question

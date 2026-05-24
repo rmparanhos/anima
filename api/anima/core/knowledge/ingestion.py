@@ -6,7 +6,7 @@ from anima.models.knowledge_chunk import KnowledgeChunk
 from anima.models.question import Question
 from anima.core.ai.embedder import embedder
 from anima.core.ai.claude import complete
-from anima.core.knowledge.search import add_chunk, remove_pending_question
+from anima.core.knowledge.search import add_chunk_async, remove_pending_question_async
 
 
 async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
@@ -31,8 +31,8 @@ async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
     chunk_id = str(uuid.uuid4())
     metadata = {"source_type": "qa_answer", "question_id": question.id}
 
-    add_chunk(chunk_id, content, embedding, metadata)
-    remove_pending_question(question.id)
+    await add_chunk_async(chunk_id, content, embedding, metadata)
+    await remove_pending_question_async(question.id)
 
     chunk = KnowledgeChunk(
         id=chunk_id,
