@@ -72,7 +72,10 @@ async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
         "concise documentation. Prioritize the provided answer as the authoritative "
         "source. Use web context only to add relevant technical terms or background. "
         "Write in the third person, present tense. "
-        "No bullet points — write flowing prose. 2-4 sentences max."
+        "No bullet points — write flowing prose. 2-4 sentences max. "
+        "CRITICAL: Never translate technical terms, product names, brand names, "
+        "acronyms, system names, or domain jargon — keep them exactly as they appear "
+        "in the question and answer. Only the surrounding prose should be in the target language."
     )
     content = await complete([
         {"role": "system", "content": prose_system},
@@ -86,9 +89,10 @@ async def ingest_answer(question: Question, db: AsyncSession) -> KnowledgeChunk:
             "content": (
                 f"For the documentation text below, provide three items in {lang}.\n\n"
                 "ENTITY: The specific product, feature, system, or named concept this text is about.\n"
+                "  Use the exact name as it appears in the text — do NOT translate it.\n"
                 "  Examples: 'Addin do Novo Pricing', 'Pipeline de Deploy', 'Auth Service', 'Relatório de Vendas'.\n"
-                "  This is the SUBJECT — what the documentation describes.\n"
                 "TITLE: A section heading for this specific piece of information, 4-7 words.\n"
+                "  Keep any technical terms or product names untranslated in the title.\n"
                 "TOPIC: A broad category, 2-4 words, e.g. 'API Integration', 'Financeiro', 'Infraestrutura'.\n\n"
                 "Respond EXACTLY in this format and nothing else:\n"
                 "ENTITY: <entity name>\n"

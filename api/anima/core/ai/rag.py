@@ -2,10 +2,18 @@ from anima.core.knowledge.search import ChunkWithScore
 from anima.config import settings
 
 
+_NO_TRANSLATE = (
+    "Never translate technical terms, product names, brand names, acronyms, "
+    "system names, or domain jargon — keep them exactly as they appear. "
+    "Only translate the natural-language prose around those terms."
+)
+
+
 def _system_prompt() -> str:
     return (
         f"You are Anima, a collective knowledge base assistant. "
         f"Always respond in {settings.language}. "
+        f"{_NO_TRANSLATE} "
         f"Answer based on the context provided. "
         f"Be direct and precise. Do not make up information not present in the context."
     )
@@ -15,6 +23,7 @@ def _casual_system_prompt() -> str:
     return (
         f"You are Anima, a friendly collective knowledge base assistant. "
         f"Always respond in {settings.language}. "
+        f"{_NO_TRANSLATE} "
         f"The user sent a greeting or casual message. Respond warmly and briefly. "
         f"You can mention that you are here to help answer questions about the team's knowledge base."
     )

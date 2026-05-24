@@ -33,4 +33,6 @@ export const api = {
   voteQuestion: (question_id: string) => request(`/api/v1/questions/${question_id}/vote`, { method: "POST" }),
   getKnowledge: (page = 1, limit = 200) => request<{ chunks: KnowledgeChunk[]; total: number }>(`/api/v1/knowledge?page=${page}&limit=${limit}`),
   getKnowledgeGraph: () => request<GraphData>("/api/v1/knowledge/graph"),
+  updateChunk: (id: string, data: { content: string; title: string; entity: string }) =>
+    request<KnowledgeChunk>(`/api/v1/knowledge/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
 }

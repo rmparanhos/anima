@@ -2,11 +2,48 @@ import asyncio
 import json
 import numpy as np
 from collections import defaultdict
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from anima.models.knowledge_chunk import KnowledgeChunk
 
 GRAPH_EDGE_THRESHOLD = 0.40  # cosine similarity between entity centroids
+
+
+async def update_chunk(
+    db: AsyncSession,
+    chunk_id: str,
+    content: str,
+    title: str,
+    entity: str,
+) -> KnowledgeChunk:
+    """Update a knowledge chunk's content, title and entity; re-embeds in ChromaDB."""
+    from anima.core.ai.embedder import embedder
+    from anima.core.knowledge.search import update_chunk_async
+
+    chunk = await db.get(KnowledgeChunk, chunk_id)
+    if not chunk:
+        raise ValueError(f"Chunk {chunk_id!r} not found")
+
+    # Preserve existing metadata fields (topic, source_type, etc.)
+    meta: dict = {}
+    try:
+        meta = json.loads(chunk.metadata_json or "{}")
+    except Exception:
+        pass
+
+    meta["title"]  = title.strip()
+    meta["entity"] = entity.strip()
+
+    embedding = await embedder.embed(content)
+    await update_chunk_async(chunk_id, content, embedding, meta)
+
+    chunk.content       = content
+    chunk.metadata_json = json.dumps(meta)
+    chunk.updated_at    = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(chunk)
+    return chunk
 
 
 async def get_all_chunks(db: AsyncSession, page: int = 1, limit: int = 50) -> tuple[list[KnowledgeChunk], int]:

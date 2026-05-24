@@ -88,6 +88,14 @@ async def add_chunk_async(chunk_id: str, content: str, embedding: list[float], m
     )
 
 
+async def update_chunk_async(chunk_id: str, content: str, embedding: list[float], metadata: dict) -> None:
+    await asyncio.to_thread(
+        lambda: _get_collection().update(
+            ids=[chunk_id], documents=[content], embeddings=[embedding], metadatas=[metadata]
+        )
+    )
+
+
 def add_chunk(chunk_id: str, content: str, embedding: list[float], metadata: dict) -> None:
     _get_collection().add(ids=[chunk_id], documents=[content], embeddings=[embedding], metadatas=[metadata])
 

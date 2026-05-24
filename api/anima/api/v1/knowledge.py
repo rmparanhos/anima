@@ -1,10 +1,10 @@
 import json
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel
 from datetime import datetime
 from anima.dependencies import get_db
-from anima.services.knowledge_service import get_all_chunks, get_knowledge_graph, _extract_meta
+from anima.services.knowledge_service import get_all_chunks, get_knowledge_graph, update_chunk, _extract_meta
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 
@@ -51,6 +51,12 @@ class GraphResponse(BaseModel):
     links: list[GraphLink]
 
 
+class ChunkUpdate(BaseModel):
+    content: str
+    title: str
+    entity: str
+
+
 @router.get("", response_model=KnowledgeResponse)
 async def list_knowledge(
     page: int = Query(1, ge=1),
@@ -73,6 +79,29 @@ async def list_knowledge(
             for c in chunks
         ],
         total=total,
+    )
+
+
+@router.patch("/{chunk_id}", response_model=ChunkOut)
+async def patch_chunk(
+    chunk_id: str,
+    body: ChunkUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update a knowledge chunk's content, title and entity (re-embeds in ChromaDB)."""
+    try:
+        c = await update_chunk(db, chunk_id, body.content, body.title, body.entity)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    return ChunkOut(
+        id=c.id,
+        entity=_extract_meta(c)[0],
+        title=_extract_meta(c)[1],
+        topic=_extract_meta(c)[2],
+        content=c.content,
+        source_type=c.source_type,
+        source_id=c.source_id,
+        created_at=c.created_at,
     )
 
 
