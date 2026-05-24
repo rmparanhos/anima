@@ -11,20 +11,23 @@
  *   anima model          → lists available Ollama models
  *   anima model <name>   → switches the model (e.g. anima model qwen2.5:7b)
  */
-import { execSync, spawn } from "node:child_process"
+import { execSync, spawnSync, spawn } from "node:child_process"
 import { existsSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 
+const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
+const API  = join(ROOT, "api")
+
 const resolvePythonPath = () => {
-  if (existsSync("./api/.venv/bin/python")) return "./api/.venv/bin/python"
+  // Use absolute paths so the command works regardless of cwd
+  const venv = join(API, ".venv", "bin", "python")
+  if (existsSync(venv)) return venv
   if (existsSync("/opt/homebrew/bin/python3.12")) return "/opt/homebrew/bin/python3.12"
-  if (existsSync("/usr/bin/python3")) return "python3"
+  try { execSync("which python3", { stdio: "pipe" }); return "python3" } catch {}
   return "python"
 }
 
-const ROOT = dirname(dirname(fileURLToPath(import.meta.url)))
-const API  = join(ROOT, "api")
 const WEB  = join(ROOT, "web")
 
 const c    = (code, txt) => process.stdout.isTTY ? `\x1b[${code}m${txt}\x1b[0m` : txt
@@ -111,7 +114,9 @@ switch (command) {
   case "reset": {
     const py = resolvePythonPath()
     const resetScript = join(API, "reset_knowledge.py")
-    spawn(py, [resetScript], { cwd: API, stdio: "inherit" })
+    // spawnSync so the prompt is interactive and we wait for completion
+    const result = spawnSync(py, [resetScript], { cwd: API, stdio: "inherit" })
+    if (result.status !== 0) process.exit(result.status ?? 1)
     break
   }
 
